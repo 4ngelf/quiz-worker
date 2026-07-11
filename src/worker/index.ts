@@ -1,83 +1,226 @@
 import { Hono } from "hono";
 
 type QuizBindings = {
-	MAIN_DB: any;
+	MAIN_DB: MainDB;
 };
+
+type MainDB = any;
+
+//- Endpoints
 
 const app = new Hono<{ Bindings: QuizBindings }>();
 
-const ensureSchema = async (db: any) => {
-	await db.prepare(`
-		CREATE TABLE IF NOT EXISTS questions (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			prompt TEXT NOT NULL,
-			correct_answer TEXT NOT NULL,
-			option_a TEXT NOT NULL,
-			option_b TEXT NOT NULL,
-			option_c TEXT NOT NULL,
-			option_d TEXT NOT NULL
-		)
-	`).run();
-
-	await db.prepare(`
-		CREATE TABLE IF NOT EXISTS submissions (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			submitted_at TEXT NOT NULL,
-			answers TEXT NOT NULL,
-			score INTEGER NOT NULL,
-			total INTEGER NOT NULL
-		)
-	`).run();
-
-	const existingCount = await db.prepare("SELECT COUNT(*) AS count FROM questions").first();
-	const count = (existingCount as { count?: number } | null)?.count ?? 0;
-
-	if (count === 0) {
-		await db.prepare(`
-			INSERT INTO questions (prompt, correct_answer, option_a, option_b, option_c, option_d) VALUES
-				('What does HTML stand for?', 'HyperText Markup Language', 'HyperText Markup Language', 'High Transfer Machine Language', 'HyperText Markdown Language', 'Home Tool Markup Language'),
-				('Which CSS property changes the text color?', 'color', 'font-size', 'display', 'color', 'margin'),
-				('What does API stand for?', 'Application Programming Interface', 'Application Programming Interface', 'Automated Process Integration', 'Advanced Programming Instruction', 'Automated Programming Interface')
-		`).run();
-	}
-};
-
-app.get("/api/", (c) => c.json({ name: "Cloudflare Quiz" }));
+app.get("/api", (c) => c.json("API running!"));
 
 app.get("/api/questions", async (c) => {
 	const db = c.env.MAIN_DB;
-	await ensureSchema(db);
-	const result = await db.prepare("SELECT id, prompt, correct_answer, option_a, option_b, option_c, option_d FROM questions ORDER BY id").all();
-	return c.json({ questions: result.results });
+	await dbCreateTablesIfNotExists(db);
+	const questions = await dbSelectQuestions(db);
+	const options = await dbSelectQuestionOptions(db);
+
+	return c.json({ questions: questions, options: options });
 });
 
-app.post("/api/submissions", async (c) => {
+app.post("/api/submit", async (c) => {
 	const db = c.env.MAIN_DB;
-	await ensureSchema(db);
-	const payload = await c.req.json<{ answers?: Record<string, string> }>();
-	const answers = payload?.answers ?? {};
+	await dbCreateTablesIfNotExists(db);
 
-	const questionsResult = await db.prepare("SELECT id, correct_answer FROM questions ORDER BY id").all();
-	const questions = questionsResult.results as Array<{ id: number; correct_answer: string }>;
-	let score = 0;
+	const payload = await c.req.json<SubmitAnswer>();
+	if (!validateSubmitAnswer(payload)) {
+		return c.json({ error: "Invalid submit answer" }, 400);
+	}
 
-	for (const question of questions) {
-		const selected = answers[String(question.id)]?.trim().toLowerCase();
-		const correct = question.correct_answer.trim().toLowerCase();
-		if (selected === correct) {
-			score += 1;
+	const date = payload.date as string;
+	const answers = payload.answers as Answer[];
+
+	for (const answer of answers) {
+		if (!validateAnswerJson(JSON.parse(answer.answer_in_json as string))) {
+			return c.json({ error: "Invalid answer format" }, 400);
 		}
 	}
 
-	await db.prepare("INSERT INTO submissions (submitted_at, answers, score, total) VALUES (?, ?, ?, ?)")
-		.bind(new Date().toISOString(), JSON.stringify(answers), score, questions.length)
-		.run();
+	const submitted_id = await dbInsertSubmitted(db, date);
 
-	return c.json({
-		score,
-		total: questions.length,
-		message: `You scored ${score} out of ${questions.length}.`,
-	});
+	for (const answer of answers) {
+		const question_id = answer.question_id as number;
+		const answer_json = answer.answer_in_json as string;
+		await dbInsertSubmittedAnswer(db, submitted_id, question_id, answer_json);
+	}
+	
+	return c.json({success: true});
 });
+
+//- Database schema and queries
+
+const DATABASE_CREATE_TABLE_QUESTIONS = `CREATE TABLE IF NOT EXISTS questions (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	type INTEGER NOT NULL,
+	question VARCHAR NOT NULL,
+	body_text TEXT,
+	img_url VARCHAR
+)`;
+
+const DATABASE_CREATE_TABLE_QUESTION_OPTION_MULTIPLE = `CREATE TABLE IF NOT EXISTS questions_option_multiple (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	question_id INTEGER NOT NULL,
+	number INTEGER NOT NULL UNIQUE,
+	text_value VARCHAR NOT NULL,
+	img_url VARCHAR,
+	FOREIGN KEY (question_id) REFERENCES questions(id)
+		ON UPDATE CASCADE ON DELETE CASCADE
+)`;
+
+const DATABASE_CREATE_TABLE_SUBMITTED = `CREATE TABLE IF NOT EXISTS submitted (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	date VARCHAR NOT NULL
+)`;
+
+const DATABASE_CREATE_TABLE_SUBMITTED_ANSWER = `CREATE TABLE IF NOT EXISTS submitted_answer (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	submitted_id INTEGER NOT NULL UNIQUE,
+	question_id INTEGER NOT NULL,
+	json_answer TEXT NOT NULL,
+	FOREIGN KEY (submitted_id) REFERENCES submitted(id)
+		ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (question_id) REFERENCES questions(id)
+		ON UPDATE CASCADE ON DELETE NO ACTION
+)`;
+
+const dbCreateTablesIfNotExists = async (db: MainDB) => {
+	await Promise.all([
+		db.prepare(DATABASE_CREATE_TABLE_QUESTIONS).run(),
+		db.prepare(DATABASE_CREATE_TABLE_QUESTION_OPTION_MULTIPLE).run(),
+		db.prepare(DATABASE_CREATE_TABLE_SUBMITTED).run(),
+		db.prepare(DATABASE_CREATE_TABLE_SUBMITTED_ANSWER).run(),
+	]);
+};
+
+type SelectQuestions = {
+	id: number;
+	type: number;
+	question: string;
+	body_text: string | null;
+	img_url: string | null;
+};
+
+const DATABASE_SELECT_QUESTIONS = `SELECT
+	id,
+	type,
+	question,
+	body_text,
+	img_url
+FROM questions`;
+
+const dbSelectQuestions = async (db: MainDB): Promise<SelectQuestions[]> => {
+	const result = await db.prepare(DATABASE_SELECT_QUESTIONS).all();
+	return result.results as SelectQuestions[];
+};
+
+type SelectQuestionOptions = {
+	question_id: number;
+	number: number;
+	text_value: string;
+	img_url: string | null;
+};
+
+const DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE = `SELECT
+	question_id,
+	number,
+	text_value,
+	img_url
+FROM questions_option_multiple`;
+
+const dbSelectQuestionOptions = async (db: MainDB): Promise<SelectQuestionOptions[]> => {
+	const result = await db.prepare(DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE).all();
+	return result.results as SelectQuestionOptions[];
+};
+
+const DATABASE_INSERT_SUBMITTED = `INSERT INTO submitted (date) VALUES (?)`;
+
+const dbInsertSubmitted = async (db: MainDB, date: string): Promise<number> => {
+	const result = await db.prepare(DATABASE_INSERT_SUBMITTED).run(date);
+	return result.lastInsertRowid as number;
+};
+
+const DATABASE_INSERT_SUBMITTED_ANSWER = `INSERT INTO submitted_answer (submitted_id, question_id, json_answer) VALUES (?, ?, ?)`;
+
+const dbInsertSubmittedAnswer = async (db: MainDB, submitted_id: number, question_id: number, json_answer: string): Promise<void> => {
+	await db.prepare(DATABASE_INSERT_SUBMITTED_ANSWER).run(submitted_id, question_id, json_answer);
+};
+
+//- Data processing
+
+type SubmitAnswer = {
+	date?: string;
+	answers?: Answer[];
+};
+
+type Answer = {
+	question_id?: number;
+	answer_in_json?: string;
+};
+
+type AnswerJson = {
+	type?: AnswerType;
+	value?: AnswerForText | AnswerForMultiple;
+};
+
+enum AnswerType {
+	Text,
+	MultipleChoice,
+}
+
+type AnswerForText = {
+	large?: boolean;
+	text?: string;
+};
+
+type AnswerForMultiple = {
+	question_option_multiple_id?: number;
+};
+
+const validateSubmitAnswer = (answer_or_any: any): boolean => {
+	if (!answer_or_any || typeof answer_or_any !== "object") {
+		return false;
+	}
+	const answer = answer_or_any as SubmitAnswer;
+	if (typeof answer.date !== "string") {
+		return false;
+	}
+	if (!answer.answers || !Array.isArray(answer.answers)) {
+		return false;
+	}
+	for (const ans of answer.answers) {
+		if (!ans.question_id || typeof ans.question_id !== "number") {
+			return false;
+		}
+		if (!ans.answer_in_json || typeof ans.answer_in_json !== "string") {
+			return false;
+		}
+	}
+	return true;
+};
+
+const validateAnswerJson = (answer_json_or_any: any): boolean => {
+	if (!answer_json_or_any || typeof answer_json_or_any !== "object") {
+		return false;
+	}
+	const answer = answer_json_or_any as AnswerJson;
+	if (typeof answer.type !== "number") {
+		return false;
+	}
+	switch (answer.type) {
+		case AnswerType.Text:
+			const textAnswer = answer.value as AnswerForText;
+			return typeof textAnswer.text === "string";
+		case AnswerType.MultipleChoice:
+			const multipleAnswer = answer.value as AnswerForMultiple;
+			return typeof multipleAnswer.question_option_multiple_id === "number" && multipleAnswer.question_option_multiple_id > 0;
+		default:
+			return false;
+	}
+};
+
+//- Default export
 
 export default app;
