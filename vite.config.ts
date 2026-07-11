@@ -1,7 +1,10 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import solid from "vite-plugin-solid";
 import { cloudflare } from "@cloudflare/vite-plugin";
 
 export default defineConfig({
-	plugins: [react(), cloudflare()],
+	plugins: [solid(), cloudflare()],
+	server: {
+		port: 3000,
+	},
 });
