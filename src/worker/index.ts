@@ -12,9 +12,12 @@ const app = new Hono<{ Bindings: QuizBindings }>();
 
 app.get("/api", (c) => c.json("API running!"));
 
+app.get("/api-hidden/start", async (c) => {
+	await dbCreateTablesIfNotExists(c.env.MAIN_DB);
+});
+
 app.get("/api/questions", async (c) => {
 	const db = c.env.MAIN_DB;
-	await dbCreateTablesIfNotExists(db);
 	const questions = await dbSelectQuestions(db);
 	const options = await dbSelectQuestionOptions(db);
 
@@ -23,7 +26,6 @@ app.get("/api/questions", async (c) => {
 
 app.post("/api/submit", async (c) => {
 	const db = c.env.MAIN_DB;
-	await dbCreateTablesIfNotExists(db);
 
 	const payload = await c.req.json<SubmitAnswer>();
 	if (!validateSubmitAnswer(payload)) {
