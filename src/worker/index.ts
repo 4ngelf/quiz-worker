@@ -12,13 +12,19 @@ const app = new Hono<{ Bindings: QuizBindings }>();
 
 app.get("/api", (c) => c.json("API running!"));
 
-app.get("/api-hidden/start", async (c) => {
+app.get("/api/admin/start", async (c) => {
 	await dbCreateTablesIfNotExists(c.env.MAIN_DB);
 });
 
-app.get("/api/questions", async (c) => {
+app.get("/api/{survey_id}/questions", async (c) => {
 	const db = c.env.MAIN_DB;
-	const questions = await dbSelectQuestions(db);
+	const survey_id_str = c.req.param("survey_id");
+	if (!survey_id_str || isNaN(Number(survey_id_str))) {
+		return c.json({ error: "Invalid survey_id" }, 400);
+	}
+	const survey_id = Number(survey_id_str);
+	
+	const questions = await dbSelectQuestions(db, survey_id);
 	const options = await dbSelectQuestionOptions(db);
 
 	return c.json({ questions: questions, options: options });
@@ -54,12 +60,21 @@ app.post("/api/submit", async (c) => {
 
 //- Database schema and queries
 
+const DATABASE_CREATE_TABLE_SURVEYS = `CREATE TABLE IF NOT EXISTS surveys (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	name VARCHAR NOT NULL,
+	description TEXT
+)`;
+
 const DATABASE_CREATE_TABLE_QUESTIONS = `CREATE TABLE IF NOT EXISTS questions (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	survey_id INTEGER NOT NULL,
 	type INTEGER NOT NULL,
 	question VARCHAR NOT NULL,
 	body_text TEXT,
-	img_url VARCHAR
+	img_url VARCHAR,
+	FOREIGN KEY (survey_id) REFERENCES surveys(id)
+		ON UPDATE CASCADE ON DELETE CASCADE
 )`;
 
 const DATABASE_CREATE_TABLE_QUESTION_OPTION_MULTIPLE = `CREATE TABLE IF NOT EXISTS questions_option_multiple (
@@ -90,6 +105,7 @@ const DATABASE_CREATE_TABLE_SUBMITTED_ANSWER = `CREATE TABLE IF NOT EXISTS submi
 
 const dbCreateTablesIfNotExists = async (db: MainDB) => {
 	await Promise.all([
+		db.prepare(DATABASE_CREATE_TABLE_SURVEYS).run(),
 		db.prepare(DATABASE_CREATE_TABLE_QUESTIONS).run(),
 		db.prepare(DATABASE_CREATE_TABLE_QUESTION_OPTION_MULTIPLE).run(),
 		db.prepare(DATABASE_CREATE_TABLE_SUBMITTED).run(),
@@ -111,10 +127,11 @@ const DATABASE_SELECT_QUESTIONS = `SELECT
 	question,
 	body_text,
 	img_url
-FROM questions`;
+FROM questions
+WHERE survey_id = ?`;
 
-const dbSelectQuestions = async (db: MainDB): Promise<SelectQuestions[]> => {
-	const result = await db.prepare(DATABASE_SELECT_QUESTIONS).all();
+const dbSelectQuestions = async (db: MainDB, survey_id: number): Promise<SelectQuestions[]> => {
+	const result = await db.prepare(DATABASE_SELECT_QUESTIONS).all(survey_id);
 	return result.results as SelectQuestions[];
 };
 
