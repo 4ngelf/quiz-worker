@@ -14,6 +14,7 @@ app.get("/api", (c) => c.json("API running!"));
 
 app.get("/api/admin/start", async (c) => {
 	await dbCreateTablesIfNotExists(c.env.MAIN_DB);
+	return c.json({success: true});
 });
 
 app.get("/api/{survey_id}/questions", async (c) => {
@@ -33,7 +34,7 @@ app.get("/api/{survey_id}/questions", async (c) => {
 app.post("/api/submit", async (c) => {
 	const db = c.env.MAIN_DB;
 
-	const payload = await c.req.json<SubmitAnswer>();
+	const payload = await c.req.json<SubmitAnswers>();
 	if (!validateSubmitAnswer(payload)) {
 		return c.json({ error: "Invalid submit answer" }, 400);
 	}
@@ -169,7 +170,7 @@ const dbInsertSubmittedAnswer = async (db: MainDB, submitted_id: number, questio
 
 //- Data processing
 
-type SubmitAnswer = {
+type SubmitAnswers = {
 	date?: string;
 	answers?: Answer[];
 };
@@ -185,8 +186,8 @@ type AnswerJson = {
 };
 
 enum AnswerType {
-	Text,
-	MultipleChoice,
+	Text = 0,
+	MultipleChoice = 1,
 }
 
 type AnswerForText = {
@@ -202,7 +203,7 @@ const validateSubmitAnswer = (answer_or_any: any): boolean => {
 	if (!answer_or_any || typeof answer_or_any !== "object") {
 		return false;
 	}
-	const answer = answer_or_any as SubmitAnswer;
+	const answer = answer_or_any as SubmitAnswers;
 	if (typeof answer.date !== "string") {
 		return false;
 	}
