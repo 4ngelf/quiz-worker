@@ -1,62 +1,60 @@
 import { Hono } from "hono";
+import * as api from "../common/api.ts";
+
+import type { infer as z_infer } from "zod";
 
 type QuizBindings = {
-	MAIN_DB: MainDB;
+	MAIN_DB: D1Database;
 };
 
-type MainDB = any;
+const SuccessResponseValue = { success: true };
 
 //- Endpoints
 
 const app = new Hono<{ Bindings: QuizBindings }>();
 
-app.get("/api", (c) => c.json("API running!"));
+app.get("/api", (c) => c.json(SuccessResponseValue));
 
 app.get("/api/admin/start", async (c) => {
-	await dbCreateTablesIfNotExists(c.env.MAIN_DB);
-	return c.json({success: true});
+	await dbCreateTablesIfNotExists(c.env);
+	return c.json(SuccessResponseValue);
 });
 
-app.get("/api/{survey_id}/questions", async (c) => {
-	const db = c.env.MAIN_DB;
+app.get("/api/:survey_id/questions", async (c) => {
 	const survey_id_str = c.req.param("survey_id");
-	if (!survey_id_str || isNaN(Number(survey_id_str))) {
+	if (!survey_id_str) {
 		return c.json({ error: "Invalid survey_id" }, 400);
 	}
+
 	const survey_id = Number(survey_id_str);
-	
-	const questions = await dbSelectQuestions(db, survey_id);
-	const options = await dbSelectQuestionOptions(db);
+	if (isNaN(survey_id)) {
+		return c.json({ error: "Invalid survey_id" }, 400);
+	}
+
+	const questions = await dbSelectQuestions(c.env, survey_id);
+	const options = await dbSelectQuestionOptions(c.env, survey_id);
 
 	return c.json({ questions: questions, options: options });
 });
 
 app.post("/api/submit", async (c) => {
-	const db = c.env.MAIN_DB;
-
-	const payload = await c.req.json<SubmitAnswers>();
-	if (!validateSubmitAnswer(payload)) {
-		return c.json({ error: "Invalid submit answer" }, 400);
+	const payload = api.SubmitRequest.safeParse(await c.req.json());
+	if (!payload.success) {
+		return c.json({ error: "Invalid answer payload", payload: payload.error }, 400);
 	}
+	const submit = payload.data;
 
-	const date = payload.date as string;
-	const answers = payload.answers as Answer[];
-
-	for (const answer of answers) {
-		if (!validateAnswerJson(JSON.parse(answer.answer_in_json as string))) {
-			return c.json({ error: "Invalid answer format" }, 400);
+	for (const answer of submit.answers) {
+		const result = api.JsonAnswerFromString.safeParse(answer.json_answer);
+		if (!result.success) {
+			return c.json({ error: "Invalid answer payload", payload: payload.error }, 400);
 		}
 	}
 
-	const submitted_id = await dbInsertSubmitted(db, date);
+	const submitted_id = await dbInsertSubmitted(c.env, submit.date);
+	await dbInsertSubmittedAnswers(c.env, submitted_id, submit.answers);
 
-	for (const answer of answers) {
-		const question_id = answer.question_id as number;
-		const answer_json = answer.answer_in_json as string;
-		await dbInsertSubmittedAnswer(db, submitted_id, question_id, answer_json);
-	}
-	
-	return c.json({success: true});
+	return c.json(SuccessResponseValue);
 });
 
 //- Database schema and queries
@@ -78,7 +76,7 @@ const DATABASE_CREATE_TABLE_QUESTIONS = `CREATE TABLE IF NOT EXISTS questions (
 		ON UPDATE CASCADE ON DELETE CASCADE
 )`;
 
-const DATABASE_CREATE_TABLE_QUESTION_OPTION_MULTIPLE = `CREATE TABLE IF NOT EXISTS questions_option_multiple (
+const DATABASE_CREATE_TABLE_QUESTION_OPTIONS = `CREATE TABLE IF NOT EXISTS questions_options (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	question_id INTEGER NOT NULL,
 	number INTEGER NOT NULL UNIQUE,
@@ -104,141 +102,107 @@ const DATABASE_CREATE_TABLE_SUBMITTED_ANSWER = `CREATE TABLE IF NOT EXISTS submi
 		ON UPDATE CASCADE ON DELETE NO ACTION
 )`;
 
-const dbCreateTablesIfNotExists = async (db: MainDB) => {
+const dbCreateTablesIfNotExists = async (env: QuizBindings) => {
+	const db = env.MAIN_DB;
 	await Promise.all([
-		db.prepare(DATABASE_CREATE_TABLE_SURVEYS).run(),
-		db.prepare(DATABASE_CREATE_TABLE_QUESTIONS).run(),
-		db.prepare(DATABASE_CREATE_TABLE_QUESTION_OPTION_MULTIPLE).run(),
-		db.prepare(DATABASE_CREATE_TABLE_SUBMITTED).run(),
-		db.prepare(DATABASE_CREATE_TABLE_SUBMITTED_ANSWER).run(),
+		db.exec(DATABASE_CREATE_TABLE_SURVEYS),
+		db.exec(DATABASE_CREATE_TABLE_QUESTIONS),
+		db.exec(DATABASE_CREATE_TABLE_QUESTION_OPTIONS),
+		db.exec(DATABASE_CREATE_TABLE_SUBMITTED),
+		db.exec(DATABASE_CREATE_TABLE_SUBMITTED_ANSWER),
 	]);
 };
 
-type SelectQuestions = {
+type SelectQuestionsJson = { record: string; };
+type SelectQuestions = Record<string, {
 	id: number;
 	type: number;
 	question: string;
 	body_text: string | null;
 	img_url: string | null;
-};
+}>;
 
-const DATABASE_SELECT_QUESTIONS = `SELECT
+const DATABASE_SELECT_QUESTIONS = `WITH survey_questions AS (
+	SELECT * 
+	FROM questions
+	WHERE survey_id = ?
+)
+SELECT json_group_object(
 	id,
-	type,
-	question,
-	body_text,
-	img_url
-FROM questions
-WHERE survey_id = ?`;
+	json_object(
+		'id', id,
+		'type', type, 
+		'question', question, 
+		'body_text', body_text, 
+		'img_url', img_url 
+	)
+) AS record
+FROM survey_questions`;
 
-const dbSelectQuestions = async (db: MainDB, survey_id: number): Promise<SelectQuestions[]> => {
-	const result = await db.prepare(DATABASE_SELECT_QUESTIONS).all(survey_id);
-	return result.results as SelectQuestions[];
+const dbSelectQuestions = async (env: QuizBindings, survey_id: number): Promise<SelectQuestions> => {
+	const db = env.MAIN_DB;
+	const result = await db.prepare(DATABASE_SELECT_QUESTIONS).bind(survey_id).all<SelectQuestionsJson>();
+	return JSON.parse(result.results[0].record);
 };
 
-type SelectQuestionOptions = {
+type SelectQuestionOptionsJson = { record: string; };
+type SelectQuestionOptions = Record<string, {
+	id: number;
 	question_id: number;
 	number: number;
 	text_value: string;
 	img_url: string | null;
+}>;
+
+const DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE = `WITH survey_questions_options AS (
+	SELECT
+		qo.id,
+		qo.question_id,
+		qo.number,
+		qo.text_value,
+		qo.img_url
+	FROM questions_options qo
+	INNER JOIN questions q ON qo.question_id = q.id
+	WHERE q.survey_id = ?
+)
+SELECT json_group_object(
+	id,
+	json_object(
+		'question_id', question_id, 
+		'number', number, 
+		'text_value', text_value, 
+		'img_url', img_url
+	)
+) AS record
+FROM survey_questions_options`;
+
+const dbSelectQuestionOptions = async (env: QuizBindings, survey_id: number): Promise<SelectQuestionOptions> => {
+	const db = env.MAIN_DB;
+	const result = await db.prepare(DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE).bind(survey_id).all<SelectQuestionOptionsJson>();
+	return JSON.parse(result.results[0].record) as SelectQuestionOptions;
 };
 
-const DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE = `SELECT
+const DATABASE_INSERT_SUBMITTED = `INSERT INTO submitted (
+	date
+) VALUES (?)`;
+
+const dbInsertSubmitted = async (env: QuizBindings, date: string): Promise<number> => {
+	const db = env.MAIN_DB;
+	const result = await db.prepare(DATABASE_INSERT_SUBMITTED).bind(date).run();
+	return result.meta.last_row_id;
+};
+
+const DATABASE_INSERT_SUBMITTED_ANSWER = `INSERT INTO submitted_answer (
+	submitted_id,
 	question_id,
-	number,
-	text_value,
-	img_url
-FROM questions_option_multiple`;
+	json_answer
+) VALUES (?, ?, ?)`;
 
-const dbSelectQuestionOptions = async (db: MainDB): Promise<SelectQuestionOptions[]> => {
-	const result = await db.prepare(DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE).all();
-	return result.results as SelectQuestionOptions[];
-};
-
-const DATABASE_INSERT_SUBMITTED = `INSERT INTO submitted (date) VALUES (?)`;
-
-const dbInsertSubmitted = async (db: MainDB, date: string): Promise<number> => {
-	const result = await db.prepare(DATABASE_INSERT_SUBMITTED).run(date);
-	return result.lastInsertRowid as number;
-};
-
-const DATABASE_INSERT_SUBMITTED_ANSWER = `INSERT INTO submitted_answer (submitted_id, question_id, json_answer) VALUES (?, ?, ?)`;
-
-const dbInsertSubmittedAnswer = async (db: MainDB, submitted_id: number, question_id: number, json_answer: string): Promise<void> => {
-	await db.prepare(DATABASE_INSERT_SUBMITTED_ANSWER).run(submitted_id, question_id, json_answer);
-};
-
-//- Data processing
-
-type SubmitAnswers = {
-	date?: string;
-	answers?: Answer[];
-};
-
-type Answer = {
-	question_id?: number;
-	answer_in_json?: string;
-};
-
-type AnswerJson = {
-	type?: AnswerType;
-	value?: AnswerForText | AnswerForMultiple;
-};
-
-enum AnswerType {
-	Text = 0,
-	MultipleChoice = 1,
-}
-
-type AnswerForText = {
-	large?: boolean;
-	text?: string;
-};
-
-type AnswerForMultiple = {
-	question_option_multiple_id?: number;
-};
-
-const validateSubmitAnswer = (answer_or_any: any): boolean => {
-	if (!answer_or_any || typeof answer_or_any !== "object") {
-		return false;
-	}
-	const answer = answer_or_any as SubmitAnswers;
-	if (typeof answer.date !== "string") {
-		return false;
-	}
-	if (!answer.answers || !Array.isArray(answer.answers)) {
-		return false;
-	}
-	for (const ans of answer.answers) {
-		if (!ans.question_id || typeof ans.question_id !== "number") {
-			return false;
-		}
-		if (!ans.answer_in_json || typeof ans.answer_in_json !== "string") {
-			return false;
-		}
-	}
-	return true;
-};
-
-const validateAnswerJson = (answer_json_or_any: any): boolean => {
-	if (!answer_json_or_any || typeof answer_json_or_any !== "object") {
-		return false;
-	}
-	const answer = answer_json_or_any as AnswerJson;
-	if (typeof answer.type !== "number") {
-		return false;
-	}
-	switch (answer.type) {
-		case AnswerType.Text:
-			const textAnswer = answer.value as AnswerForText;
-			return typeof textAnswer.text === "string";
-		case AnswerType.MultipleChoice:
-			const multipleAnswer = answer.value as AnswerForMultiple;
-			return typeof multipleAnswer.question_option_multiple_id === "number" && multipleAnswer.question_option_multiple_id > 0;
-		default:
-			return false;
-	}
+const dbInsertSubmittedAnswers = async (env: QuizBindings, submitted_id: number, answers: z_infer<typeof api.AnswerArray>): Promise<void> => {
+	const db = env.MAIN_DB;
+	const stmt_template = db.prepare(DATABASE_INSERT_SUBMITTED_ANSWER);
+	const stmts = answers.map((answer) => stmt_template.bind(submitted_id, answer.question_id, answer.json_answer));
+	await db.batch(stmts);
 };
 
 //- Default export
