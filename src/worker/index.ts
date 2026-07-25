@@ -198,7 +198,7 @@ const DATABASE_INSERT_SUBMITTED_ANSWER = `INSERT INTO submitted_answer (
 	json_answer
 ) VALUES (?, ?, ?)`;
 
-const dbInsertSubmittedAnswers = async (env: QuizBindings, submitted_id: number, answers: z_infer<typeof api.AnswerArray>): Promise<void> => {
+const dbInsertSubmittedAnswers = async (env: QuizBindings, submitted_id: number, answers: z_infer<typeof api.SubmitRequest>["answers"]): Promise<void> => {
 	const db = env.MAIN_DB;
 	const stmt_template = db.prepare(DATABASE_INSERT_SUBMITTED_ANSWER);
 	const stmts = answers.map((answer) => stmt_template.bind(submitted_id, answer.question_id, answer.json_answer));

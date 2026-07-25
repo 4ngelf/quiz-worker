@@ -13,6 +13,7 @@ import {
 	positive,
 	pipe,
 	transform,
+	infer as z_infer
 } from "zod/mini";
 
 // Common types
@@ -90,9 +91,7 @@ export const Answer = object({
 	json_answer: string(),
 });
 
-export const AnswerArray = array(Answer);
-
 export const SubmitRequest = object({
 	date: string(),
-	answers: AnswerArray,
+	answers: array(Answer),
 });
