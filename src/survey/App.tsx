@@ -9,7 +9,8 @@ import {
 	Show,
 } from "solid-js";
 import { createStore } from "solid-js/store";
-import * as validate from "./validate";
+
+import * as api from "../common/api.ts";
 
 //# Assets
 
@@ -17,7 +18,7 @@ import "./App.css";
 
 //# API Layer
 
-const apiFetch = async (url: string, validate_response_fn: (response: any) => boolean, fetch_opts?: RequestInit): Promise<any> => {
+const apiFetch = async <T,>(url: string, validate_response_fn: (r: T) => r is T, fetch_opts?: RequestInit): Promise<T> => {
 	const response = await fetch(url, fetch_opts);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch data from '${url}' with ${response.status} '${response.statusText}'`);
@@ -29,24 +30,17 @@ const apiFetch = async (url: string, validate_response_fn: (response: any) => bo
 	return data;
 };
 
-const apiFetchPostJson = async (url: string, validate_response_fn: (response: any) => boolean, json_object: any): Promise<any> =>
+const apiFetchPostJson = async <T,>(url: string, validate_response_fn: (r: T) => r is T, json_object: any): Promise<T> =>
 	apiFetch(url, validate_response_fn, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify(json_object),
 	});
 
-const isValidResponseSuccess = (response: any): response is {success: boolean} => {
-	if (!validate.isObject(response)) {
-		return false;
-	}
-	if (!validate.hasAttribute(response, "success")) {
-		return false;
-	}
-	if (!validate.isBoolean((response as {success: boolean}).success)) {
-		return false;
-	}
-	return true;
+const isValidResponseSuccess = (response: any): response is { success: boolean } => {
+	return validate.isObject(response) &&
+		validate.hasAttributeAny(response, "success") &&
+		validate.isBoolean(response.success);
 };
 
 //## /api/admin/start
@@ -55,7 +49,7 @@ type ResponseStart = {
 	success: boolean;
 };
 
-const fetchStart = (): Promise<ResponseStart> => apiFetch("/api/admin/start", isValidResponseStart);
+const fetchStart = () => apiFetch("/api/admin/start", isValidResponseStart);
 
 const isValidResponseStart: (response: any) => response is ResponseStart = isValidResponseSuccess;
 
@@ -63,7 +57,7 @@ const isValidResponseStart: (response: any) => response is ResponseStart = isVal
 
 type ResponseQuestions = {
 	questions: QuizQuestion[];
-	options: QuizQuestionOptions[];
+	options: QuizQuestionOption[];
 };
 
 type QuizQuestion = {
@@ -74,83 +68,43 @@ type QuizQuestion = {
 	img_url?: string;
 };
 
-type QuizQuestionOptions = {
+type QuizQuestionOption = {
+	id: number;
 	question_id: number;
 	number: number;
 	text_value: string;
 	img_url?: string;
 };
 
-const fetchQuestions = (survey_id: number): Promise<ResponseQuestions> => 
+const fetchQuestions = (survey_id: number) =>
 	apiFetch(`/api/${survey_id}/questions`, isValidResponseQuestions);
 
 const isValidResponseQuestions = (response: any): response is ResponseQuestions => {
-	if (!validate.isObject(response)) {
-		return false;
-	}
-	if (!validate.hasAttributes(response, ["questions", "options"])) {
-		return false;
-	}
-	if (!validate.isArrayWith((response as ResponseQuestions).questions, isValidQuizQuestion)) {
-		return false;
-	}
-	if (!validate.isArrayWith((response as ResponseQuestions).options, isValidQuizQuestionOptions)) {
-		return false;
-	}
-	return true;
+	return validate.isObject(response) &&
+		validate.hasAttributes(response, ["id", "questions", "options"]) &&
+		validate.isNumber(response.id) &&
+		validate.isArrayWith(response.questions, isValidQuizQuestion) &&
+		validate.isArrayWith(response.options, isValidQuizQuestionOption);
 };
 
 const isValidQuizQuestion = (question: any): question is QuizQuestion => {
-	if (!validate.isObject(question)) {
-		return false;
-	}
-	if (!validate.hasAttributes(question, ["id", "type", "question"])) {
-		return false;
-	}
-	if (!validate.isNumber((question as QuizQuestion).id)) {
-		return false;
-	}
-	if (!validate.isNumber((question as QuizQuestion).type)) {
-		return false;
-	}
-	if (!validate.isString((question as QuizQuestion).question)) {
-		return false;
-	}
-	if (validate.hasAttribute(question, "body_text")) {
-		if (!validate.isString((question as QuizQuestion).body_text)) {
-			return false;
-		}
-	}
-	if (validate.hasAttribute(question, "img_url")) {
-		if (!validate.isString((question as QuizQuestion).img_url)) {
-			return false;
-		}
-	}
-	return true;
+	return validate.isObject(question) &&
+		validate.hasAttributes(question, ["id", "type", "question"]) &&
+		validate.isNumber(question.id) &&
+		validate.isNumber(question.type) &&
+		validate.isString(question.question) &&
+		(!validate.hasAttributeAny(question, "body_text") || validate.isString(question.body_text)) &&
+		(!validate.hasAttributeAny(question, "img_url") || validate.isString(question.img_url));
 };
 
-const isValidQuizQuestionOptions = (option: any): option is QuizQuestionOptions => {
-	if (!validate.isObject(option)) {
-		return false;
-	}
-	if (!validate.hasAttributes(option, ["question_id", "number", "text_value"])) {
-		return false;
-	}
-	if (!validate.isNumber((option as QuizQuestionOptions).question_id)) {
-		return false;
-	}
-	if (!validate.isNumber((option as QuizQuestionOptions).number)) {
-		return false;
-	}
-	if (!validate.isString((option as QuizQuestionOptions).text_value)) {
-		return false;
-	}
-	if (validate.hasAttribute(option, "img_url")) {
-		if (!validate.isString((option as QuizQuestionOptions).img_url)) {
-			return false;
-		}
-	}
-	return true;
+const isValidQuizQuestionOption = (option: any): option is QuizQuestionOption => {
+	return validate.isObject(option) &&
+		validate.hasAttributes(option, ["id", "question_id", "number", "text_value"]) &&
+		validate.isNumber(option.id) &&
+		validate.isNumber(option.question_id) &&
+		validate.isNumber(option.number) &&
+		validate.isString(option.text_value) &&
+		(!validate.hasAttributeAny(option, "img_url") || validate.isString(option.img_url));
 };
 
 //## /api/submit
@@ -188,10 +142,10 @@ type AnswerForText = {
 };
 
 type AnswerForMultiple = {
-    question_option_multiple_id: number;
+	question_option_multiple_id: number;
 };
 
-const fetchSubmit = (answers: QuizAnswer[]): Promise<ResponseSubmit> => 
+const fetchSubmit = (answers: QuizAnswer[]) =>
 	apiFetchPostJson("/api/submit", isValidResponseSubmit, makeRequestSubmit(answers));
 
 const isValidResponseSubmit: (response: any) => response is ResponseSubmit = isValidResponseSuccess;
@@ -232,21 +186,45 @@ const makeQuizAnswerForMultiple = (question_id: number, question_option_multiple
 
 //## State manipulation
 
-type QuestionIndex = number;
+type QuestionId = number;
+type OptionId = number;
 type OptionIndex = number;
 
-type AppAllQuestionsState = Record<QuestionIndex, AppQuestionState>
+// Internal representation for responseQuestions
+type AppResponseQuestions = {
+	questions: Record<QuestionId, QuizQuestion>;
+	options: Record<OptionId, QuizQuestionOption>;
+};
 
-// Internal representation for questions
+type AppAllQuestionsState = Record<QuestionId, AppQuestionState>;
+
+// Internal representation for answers
 type AppQuestionState = {
 	answer: AnswerFor;
 	options_if_multiple?: OptionIndex[];
 };
 
+const fetchQuestionsAsHashMaps = async (survey_id: number): Promise<AppResponseQuestions> => {
+	const responseQuestions = await fetchQuestions(survey_id);
+	const questions: Record<QuestionId, QuizQuestion> = {};
+	for (const question of responseQuestions.questions) {
+		questions[question.id] = question;
+	}
+	const options: Record<OptionId, QuizQuestionOption> = {};
+	for (const option of responseQuestions.options) {
+		options[option.id] = option;
+	}
+	return { questions: questions, options: options };
+};
+
+const makeAnswersFromResponseQuestions = (response: AppResponseQuestions): AppAllQuestionsState {
+
+}
+
 // Assumes that response.options is ordered by question_id
 const makeStateFromResponseQuestions = (response: ResponseQuestions): AppAllQuestionsState => {
 	const ret: AppAllQuestionsState = {};
-	
+
 	for (const question of response.questions) {
 		let state: AppQuestionState;
 		switch (question.type) {
@@ -255,7 +233,7 @@ const makeStateFromResponseQuestions = (response: ResponseQuestions): AppAllQues
 					answer: { large: false, text: "" } as AnswerForText,
 				};
 				break;
-			case AnswerType.MultipleChoice:	
+			case AnswerType.MultipleChoice:
 				state = {
 					answer: { question_option_multiple_id: -1 } as AnswerForMultiple,
 					options_if_multiple: [],
@@ -267,24 +245,30 @@ const makeStateFromResponseQuestions = (response: ResponseQuestions): AppAllQues
 		ret[question.id] = state;
 	}
 
-	let sort_list: QuestionIndex[] = [];
+	let sort_list: Set<QuestionId> = new Set();
 	for (let option_index = 0; option_index < response.options.length; option_index += 1) {
 		const option = response.options[option_index];
-		sort_list.push(option.question_id);
-		(ret[option.question_id].options_if_multiple as number[]).push(option_index);
+		sort_list.add(option.question_id);
+
+		ret[option.question_id].options_if_multiple!.push(option_index);
 	}
 
 	const compare_options_by_number = (a: OptionIndex, b: OptionIndex) => {
 		const a_number = response.options[a].number;
 		const b_number = response.options[b].number;
-		return a_number - b_number;	
+		return a_number - b_number;
 	};
-	for (const question_id of sort_list) {
-		(ret[question_id].options_if_multiple as number[]).sort(compare_options_by_number)
+	for (const question_id of sort_list.keys()) {
+		ret[question_id].options_if_multiple!.sort(compare_options_by_number)
 	}
 
 	return ret;
 };
+
+const parseIntOrDefault = (number_str: string, default_number: number): number => {
+	const ret = Number.parseInt(number_str, 10);
+	return Number.isNaN(ret) ? default_number : ret;
+}
 
 //## Main Component
 
@@ -292,10 +276,10 @@ function App() {
 	//### Constants
 
 	const url_params = new URLSearchParams(window.location.search);
-	const survey_id = Number.parseInt(url_params.get("survey_id") ?? "1", 10);
+	const survey_id = parseIntOrDefault(url_params.get("survey_id") ?? "1", 1);
 
 	//### Signals
-	
+
 	// Control the current state of the application.
 	// "init" - Initial state before/while loading the survey.
 	// "error-init" - Error while loading the survey.
@@ -308,6 +292,8 @@ function App() {
 	// The questions for the survey as is, later fetched from the API.
 	const [responseQuestions] = createResource(async () => await fetchQuestions(survey_id));
 	// const [responseQuestions, setResponseQuestions] = createSignal<ResponseQuestions | null>(null);
+
+	// Internal data representation for the questions. Used for displaying and submitting data. 
 	const [appAllQuestionState, setAppAllQuestionState] = createStore<AppAllQuestionsState>({});
 
 	// Fetch the questions and options for the survey from the API.
@@ -329,7 +315,7 @@ function App() {
 			setAppAllQuestionState(state);
 		}
 	});
-	
+
 	// const [answers, setAnswers] = createSignal<Record<number, string>>({});
 	// const [result, setResult] = createSignal<ResponseSubmit | null>(null);
 
@@ -338,22 +324,40 @@ function App() {
 
 	//### Helper Functions
 
-	const questionOptions = (question_id: number) => {
-		return appAllQuestionState.
-		return appAllQuestionState()
-			.filter((option) => option.question_id === questionId)
-			.sort((left, right) => left.number - right.number);
+	const getQuestion = (question_id: QuestionId): QuizQuestion | undefined => {
+		return responseQuestions()?.questions[question_id];
 	};
 
-	const updateTextAnswer = (questionId: number, value: string) => {
-		setAnswers((current) => ({ ...current, [questionId]: value }));
+	const getQuestionOption = (option_id: OptionIndex): QuizQuestionOption | undefined => {
+		return responseQuestions()?.options[option_id];
 	};
 
-	const selectOption = (questionId: number, optionId: number) => {
-		setAnswers((current) => ({ ...current, [questionId]: String(optionId) }));
+	const getQuestionOptions = (question_id: QuestionId): QuizQuestionOption[] | undefined => {
+		const options = responseQuestions()?.options;
+		if (!options) return undefined;
+
+		const options_indexes = appAllQuestionState[question_id].options_if_multiple;
+		if (!options_indexes) return undefined;
+
+		return options_indexes.map((option_id) => options[option_id]);
+	};
+
+	const updateTextAnswer = (question_id: QuestionId, value: string) => {
+		//@ts-expect-error Solid does not handle type aliases correctly so the third argument type appears as `Never`
+		//                 but it's actually `keyof AnswerForText`
+		setAppAllQuestionState(question_id, "answer", "text", value);
+	};
+
+	const selectOption = (question_id: QuestionId, option_id: QuestionId) => {
+		const option_db_id = getQuestionOption(option_id)?.id;
+		if (!option_db_id) return undefined;
+		//@ts-expect-error Solid does not handle type aliases correctly so the third argument type appears as `Never`
+		//                 but it's actually `keyof AnswerForMultiple`
+		setAppAllQuestionState(question_id, "answer", "question_option_multiple_id", option_db_id);
 	};
 
 	const submitSurvey = async () => {
+
 		setSubmitting(true);
 		setMessage(null);
 		setResult(null);
@@ -458,7 +462,7 @@ type StatusMessage = {
 	message: string;
 };
 
-function MaybeStatusMessage(props: {message: StatusMessage | null }) {
+function MaybeStatusMessage(props: { message: StatusMessage | null }) {
 	const message = props.message;
 	return <Show when={message !== null}>
 		<p class={message?.success ? "status success" : "status warning"}>
@@ -472,7 +476,7 @@ type SurveyBodyProps = {
 	questions: QuizQuestion[];
 	submitting: boolean;
 	answers: Record<number, string>;
-	options: QuizQuestionOptions[];
+	options: QuizQuestionOption[];
 	onSubmit: () => void;
 	onTextAnswer: (questionId: number, value: string) => void;
 	onSelectOption: (questionId: number, optionId: number) => void;
@@ -522,7 +526,7 @@ function SurveyBody(props: SurveyBodyProps) {
 type QuestionCardProps = {
 	question: QuizQuestion;
 	selectedValue: string;
-	questionChoices: QuizQuestionOptions[];
+	questionChoices: QuizQuestionOption[];
 	onTextAnswer: (questionId: number, value: string) => void;
 	onSelectOption: (questionId: number, optionId: number) => void;
 };
