@@ -1,6 +1,7 @@
 {
 	"name": "quiz",
 	"description": "Quizzes webapp",
+	"type": "module",
 	"cloudflare": {
 		"label": "Quizzes",
 		"products": [
@@ -37,6 +38,5 @@
 		"dev": "vite",
 		"lint": "eslint .",
 		"preview": "npm run build && vite preview"
-	},
-	"type": "module"
+	}
 }

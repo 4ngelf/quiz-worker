@@ -20,7 +20,19 @@ import {
 
 export const Index = number().check(positive());
 
-export const IndexFromString = pipe(pipe(string(), transform(Number)), Index);
+export const StringIndex = string().check((ctx) => {
+	const index = Number(ctx.value);
+	if (isNaN(index) || index < 0) {
+		ctx.issues.push({
+			code: "too_small",
+			minimum: 0,
+			origin: "string",
+			inclusive: true,
+			message: "Index cannot be smaller than zero",
+			input: ctx.value,
+		});
+	}
+});
 
 export const SuccessResponse = object({
     success: boolean(),
@@ -52,8 +64,8 @@ export const QuestionOption = object({
 });
 
 export const QuestionsResponse = object({
-	questions: record(IndexFromString, Question),
-	options: record(IndexFromString, QuestionOption),
+	questions: record(StringIndex, Question),
+	options: record(StringIndex, QuestionOption),
 });
 
 //- POST /api/submit
