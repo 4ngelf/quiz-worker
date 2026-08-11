@@ -13,15 +13,18 @@ Minimal survey app to ask questions and collect data.
 - [**Solidjs**](https://solidjs.com/) - A modern UI library for building interactive interfaces
 - [**Vite**](https://vite.dev/) - Lightning-fast build tooling and development server
 - [**Hono**](https://hono.dev/) - Ultralight, modern backend framework
-- [**Cloudflare Workers**](https://developers.cloudflare.com/workers/) - Edge computing platform for global deployment
+- [**Cloudflare Workers**](https://developers.cloudflare.com/workers/) - Edge computing platform for
+  global deployment
 
 ## Key Features
 
 - Anyone can open the survey and complete it quickly anonymously
-- The app collects questions from the database for a specific survey and submit the answers through a backend
+- The app collects questions from the database for a specific survey and submit the answers through
+  a backend
 - Admin page to manage questions, surveys results and see pretty plotmat of the results.
 
-Get started in minutes with local development or deploy directly via the Cloudflare dashboard. Perfect for building modern, performant web applications at the edge.
+Get started in minutes with local development or deploy directly via the Cloudflare dashboard.
+Perfect for building modern, performant web applications at the edge.
 
 <!-- dash-content-end -->
 

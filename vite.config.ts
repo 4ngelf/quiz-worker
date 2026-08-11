@@ -3,8 +3,8 @@ import solid from "vite-plugin-solid";
 import { cloudflare } from "@cloudflare/vite-plugin";
 
 export default defineConfig({
-	plugins: [solid(), cloudflare()],
-	server: {
-		port: 3000,
-	},
+  plugins: [solid(), cloudflare()],
+  server: {
+    port: 3000,
+  },
 });

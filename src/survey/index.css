@@ -1,46 +1,46 @@
 :root {
-	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-	line-height: 1.5;
-	font-weight: 400;
-	color: rgba(255, 255, 255, 0.95);
-	background: linear-gradient(135deg, #020617, #111827 60%, #1d4ed8);
-	font-synthesis: none;
-	text-rendering: optimizeLegibility;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(135deg, #020617, #111827 60%, #1d4ed8);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
-	box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 body {
-	margin: 0;
-	min-width: 320px;
-	min-height: 100vh;
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
 }
 
 #root {
-	min-height: 100vh;
+  min-height: 100vh;
 }
 
 button {
-	border-radius: 12px;
-	border: 1px solid transparent;
-	padding: 0.7em 1em;
-	font-size: 1rem;
-	font-weight: 500;
-	font-family: inherit;
-	background-color: #111827;
-	cursor: pointer;
-	transition: border-color 0.2s ease, transform 0.2s ease;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 0.7em 1em;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #111827;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 button:hover {
-	border-color: #8bd3ff;
-	transform: translateY(-1px);
+  border-color: #8bd3ff;
+  transform: translateY(-1px);
 }
 button:focus,
 button:focus-visible {
-	outline: 2px solid #8bd3ff;
-	outline-offset: 2px;
+  outline: 2px solid #8bd3ff;
+  outline-offset: 2px;
 }

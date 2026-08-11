@@ -1,19 +1,19 @@
 //- Modules
 
 import {
-	boolean,
-	string,
-	number,
-	array,
-	object,
-	record,
-	literal,
-	xor,
-	nullable,
-	positive,
-	pipe,
-	transform,
-	infer as z_infer
+  array,
+  boolean,
+  infer as z_infer,
+  literal,
+  nullable,
+  number,
+  object,
+  pipe,
+  positive,
+  record,
+  string,
+  transform,
+  xor,
 } from "zod/mini";
 
 // Common types
@@ -21,21 +21,21 @@ import {
 export const Index = number().check(positive());
 
 export const StringIndex = string().check((ctx) => {
-	const index = Number(ctx.value);
-	if (isNaN(index) || index < 0) {
-		ctx.issues.push({
-			code: "too_small",
-			minimum: 0,
-			origin: "string",
-			inclusive: true,
-			message: "Index cannot be smaller than zero",
-			input: ctx.value,
-		});
-	}
+  const index = Number(ctx.value);
+  if (isNaN(index) || index < 0) {
+    ctx.issues.push({
+      code: "too_small",
+      minimum: 0,
+      origin: "string",
+      inclusive: true,
+      message: "Index cannot be smaller than zero",
+      input: ctx.value,
+    });
+  }
 });
 
 export const SuccessResponse = object({
-    success: boolean(),
+  success: boolean(),
 });
 
 //- GET /api
@@ -48,24 +48,24 @@ export const SuccessResponse = object({
 //  Response = QuestionsResponse
 
 export const Question = object({
-	id: Index,
-	type: number(),
-	question: string(),
-	body_text: nullable(string()),
-	img_url: nullable(string()),
+  id: Index,
+  type: number(),
+  question: string(),
+  body_text: nullable(string()),
+  img_url: nullable(string()),
 });
 
 export const QuestionOption = object({
-	id: Index,
-	question_id: Index,
-	number: Index,
-	text_value: string(),
-	img_url: nullable(string()),
+  id: Index,
+  question_id: Index,
+  number: Index,
+  text_value: string(),
+  img_url: nullable(string()),
 });
 
 export const QuestionsResponse = object({
-	questions: record(StringIndex, Question),
-	options: record(StringIndex, QuestionOption),
+  questions: record(StringIndex, Question),
+  options: record(StringIndex, QuestionOption),
 });
 
 //- POST /api/submit
@@ -73,37 +73,37 @@ export const QuestionsResponse = object({
 //  Response = SuccessResponse
 
 export enum AnswerType {
-	Text = 0,
-	Multiple = 1,
+  Text = 0,
+  Multiple = 1,
 }
 
 export const JsonAnswerForText = object({
-	type: literal(AnswerType.Text),
-	large: boolean(),
-	text: string(),
+  type: literal(AnswerType.Text),
+  large: boolean(),
+  text: string(),
 });
 
 export const JsonAnswerForMultiple = object({
-	type: literal(AnswerType.Multiple),
-	question_option_id: Index,
+  type: literal(AnswerType.Multiple),
+  question_option_id: Index,
 });
 
 export const JsonAnswer = xor([
-	JsonAnswerForText,
-	JsonAnswerForMultiple
+  JsonAnswerForText,
+  JsonAnswerForMultiple,
 ]);
 
 export const JsonAnswerFromString = pipe(
-	pipe(string(), transform((s) => JSON.parse(s))),
-	JsonAnswer
+  pipe(string(), transform((s) => JSON.parse(s))),
+  JsonAnswer,
 );
 
 export const Answer = object({
-	question_id: Index,
-	json_answer: string(),
+  question_id: Index,
+  json_answer: string(),
 });
 
 export const SubmitRequest = object({
-	date: string(),
-	answers: array(Answer),
+  date: string(),
+  answers: array(Answer),
 });
