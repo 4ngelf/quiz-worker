@@ -1,15 +1,9 @@
 {
   "tasks": {
-    // esbuild?
-    // see: https://docs.deno.com/examples/cloudflare_workers_wrangler_tutorial/#setup-build
-    "build:worker": "deno check",
-    "build:frontend": "deno npm:vite build",
-    "build": {
-      "dependencies": ["build:worker", "build:frontend"]
-    },
+    "build": "deno -REWS --allow-run --allow-ffi npm:vite build",
 
-    "dev:worker": "echo DEV WORKER",
-    "dev:frontend": "echo DEV FRONTEND",
+    "dev:worker": "deno -RE --allow-run npm:wrangler dev",
+    "dev:frontend": "deno -REWSN --allow-run --allow-ffi npm:vite dev", // -REWS --allow-run --allow-ffi 
     "dev": {
       "dependencies": ["dev:worker", "dev:frontend"]
     },
@@ -19,7 +13,8 @@
     // Mantainance tasks
     "lint": "deno lint",
     "fmt": "deno fmt",
-    "cf-typegen": "deno --allow-env npm:wrangler types"
+    "clean": "rm -rf ./dist ./.wrangler",
+    "cf-typegen": "deno -E --allow-run npm:wrangler types"
   },
 
   "imports": {
@@ -34,11 +29,14 @@
     "zod": "npm:zod@^4.4.3",
 
     // Development dependencies
-    "@cloudflare/vite-plugin": "npm:@cloudflare/vite-plugin@^1.0.0",
+    "@cloudflare/vite-plugin": "npm:@cloudflare/vite-plugin@1.45.0",
+    "@deno/esbuild-plugin": "jsr:@deno/esbuild-plugin@^1.2.1",
+    "esbuild": "npm:esbuild",
     "globals": "npm:globals@^17.0.0",
     "vite": "npm:vite@^6.0.0",
     "vite-plugin-solid": "npm:vite-plugin-solid@2.11.12",
-    "wrangler": "npm:wrangler@4.110.0"
+    "wrangler": "npm:wrangler@4.111.0"
+
     // "@types/node": "24.10.1",
     // "eslint": "^9.0.0",
     // "@eslint/js": "^9.0.0",

@@ -13,6 +13,7 @@
     "publish": true
   },
   "dependencies": {
+    "esbuild": "^0.28.1",
     "hono": "4.12.29",
     "solid-js": "1.9.14",
     "zod": "^4.4.3"
