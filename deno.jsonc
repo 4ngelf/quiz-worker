@@ -31,6 +31,7 @@
     // Dependencies
     "solid-js": "npm:solid-js@1.9.14",
     "hono": "npm:hono@4.12.29",
+    "@hono/standard-validator": "npm:@hono/standard-validator@^0.3.0"
     "zod": "npm:zod@^4.4.3",
 
     // Development dependencies

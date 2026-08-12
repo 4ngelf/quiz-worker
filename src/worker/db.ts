@@ -1,7 +1,10 @@
 //! Database schema and queries
 
-type SelectQuestionsJson = { record: string };
-type SelectQuestions = Record<string, {
+import type { infer as z_infer } from "zod";
+import type * as api from "@worker/index.ts";
+
+export type SelectQuestionsJson = { record: string };
+export type SelectQuestions = Record<string, {
   id: number;
   type: number;
   question: string;
@@ -26,8 +29,8 @@ SELECT json_group_object(
 ) AS record
 FROM survey_questions`;
 
-const selectQuestions = async (
-  env: QuizBindings,
+export const selectQuestions = async (
+  env: Cloudflare.Env,
   survey_id: number,
 ): Promise<SelectQuestions> => {
   const db = env.MAIN_DB;
@@ -69,8 +72,8 @@ SELECT json_group_object(
 ) AS record
 FROM survey_questions_options`;
 
-const selectQuestionOptions = async (
-  env: QuizBindings,
+export const selectQuestionOptions = async (
+  env: Cloudflare.Env,
   survey_id: number,
 ): Promise<SelectQuestionOptions> => {
   const db = env.MAIN_DB;
@@ -84,7 +87,7 @@ const DATABASE_INSERT_SUBMITTED = `INSERT INTO submitted (
 	date
 ) VALUES (?)`;
 
-const insertSubmitted = async (env: QuizBindings, date: string): Promise<number> => {
+export const insertSubmitted = async (env: Cloudflare.Env, date: string): Promise<number> => {
   const db = env.MAIN_DB;
   const result = await db.prepare(DATABASE_INSERT_SUBMITTED).bind(date).run();
   return result.meta.last_row_id;
@@ -96,10 +99,10 @@ const DATABASE_INSERT_SUBMITTED_ANSWER = `INSERT INTO submitted_answer (
 	json_answer
 ) VALUES (?, ?, ?)`;
 
-type SubmitRequest = z_infer<typeof api.SubmitRequest>;
+export type SubmitRequest = z_infer<typeof api.SubmitRequest>;
 
-const insertSubmittedAnswers = async (
-  env: QuizBindings,
+export const insertSubmittedAnswers = async (
+  env: Cloudflare.Env,
   submitted_id: number,
   answers: SubmitRequest["answers"],
 ): Promise<void> => {

@@ -13,15 +13,18 @@ import {
   useContext,
 } from "solid-js";
 import { createStore } from "solid-js/store";
-import * as api from "../common/api.ts";
+import { hc } from "hono/client";
 
 import type { infer as z_infer } from "zod/mini";
+import type * as api from "@worker/index.ts";
 
 //# Assets
 
 import "./App.css";
 
 //# API Layer
+
+const client = hc<api.API>("https://client");
 
 //## Common types
 
