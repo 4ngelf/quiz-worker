@@ -2,13 +2,18 @@
   "tasks": {
     "build": "deno -REWS --allow-run --allow-ffi npm:vite build",
 
+    "preview": {
+      "command": "deno -REWSN --allow-run --allow-ffi npm:vite preview",
+      "dependencies": ["build"],
+    },
+
+    "deploy": "deno --allow-env --allow-run npm:wrangler deploy",
+
     "dev:worker": "deno -RE --allow-run npm:wrangler dev",
     "dev:frontend": "deno -REWSN --allow-run --allow-ffi npm:vite dev", // -REWS --allow-run --allow-ffi 
     "dev": {
       "dependencies": ["dev:worker", "dev:frontend"]
     },
-
-    "deploy": "deno --allow-env --allow-run npm:wrangler deploy",
 
     // Mantainance tasks
     "lint": "deno lint",
@@ -36,12 +41,6 @@
     "vite": "npm:vite@^6.0.0",
     "vite-plugin-solid": "npm:vite-plugin-solid@2.11.12",
     "wrangler": "npm:wrangler@4.111.0"
-
-    // "@types/node": "24.10.1",
-    // "eslint": "^9.0.0",
-    // "@eslint/js": "^9.0.0",
-    // "typescript": "^5.0.0",
-    // "typescript-eslint": "^8.0.0",
   },
   "minimumDependencyAge": {
     "age": "P7D"
@@ -53,6 +52,7 @@
     "lineWidth": 100,
     "indentWidth": 2,
     "semiColons": true,
-    "singleQuote": false
+    "singleQuote": false,
+    "include": ["src/"],
   }
 }

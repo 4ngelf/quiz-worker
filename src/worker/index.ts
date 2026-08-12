@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import * as api from "../common/api.ts";
+import * as db from "./db.ts";
 
 import type { infer as z_infer } from "zod";
 
@@ -10,11 +10,6 @@ const SuccessResponseValue = { success: true };
 const app = new Hono<{ Bindings: Cloudflare.Env }>();
 
 app.get("/api", (c) => c.json(SuccessResponseValue));
-
-app.get("/api/admin/start", async (c) => {
-  await dbCreateTablesIfNotExists(c.env);
-  return c.json(SuccessResponseValue);
-});
 
 app.get("/api/:survey_id/questions", async (c) => {
   const survey_id_str = c.req.param("survey_id");
@@ -27,8 +22,8 @@ app.get("/api/:survey_id/questions", async (c) => {
     return c.json({ error: "Invalid survey_id" }, 400);
   }
 
-  const questions = await dbSelectQuestions(c.env, survey_id);
-  const options = await dbSelectQuestionOptions(c.env, survey_id);
+  const questions = await db.selectQuestions(c.env, survey_id);
+  const options = await db.selectQuestionOptions(c.env, survey_id);
 
   return c.json({ questions: questions, options: options });
 });
@@ -47,123 +42,11 @@ app.post("/api/submit", async (c) => {
     }
   }
 
-  const submitted_id = await dbInsertSubmitted(c.env, submit.date);
-  await dbInsertSubmittedAnswers(c.env, submitted_id, submit.answers);
+  const submitted_id = await db.insertSubmitted(c.env, submit.date);
+  await db.insertSubmittedAnswers(c.env, submitted_id, submit.answers);
 
   return c.json(SuccessResponseValue);
 });
-
-//- Database schema and queries
-
-type SelectQuestionsJson = { record: string };
-type SelectQuestions = Record<string, {
-  id: number;
-  type: number;
-  question: string;
-  body_text: string | null;
-  img_url: string | null;
-}>;
-
-const DATABASE_SELECT_QUESTIONS = `WITH survey_questions AS (
-	SELECT * 
-	FROM questions
-	WHERE survey_id = ?
-)
-SELECT json_group_object(
-	id,
-	json_object(
-		'id', id,
-		'type', type, 
-		'question', question, 
-		'body_text', body_text, 
-		'img_url', img_url 
-	)
-) AS record
-FROM survey_questions`;
-
-const dbSelectQuestions = async (
-  env: QuizBindings,
-  survey_id: number,
-): Promise<SelectQuestions> => {
-  const db = env.MAIN_DB;
-  const result = await db.prepare(DATABASE_SELECT_QUESTIONS).bind(survey_id).all<
-    SelectQuestionsJson
-  >();
-  return JSON.parse(result.results[0].record);
-};
-
-type SelectQuestionOptionsJson = { record: string };
-type SelectQuestionOptions = Record<string, {
-  id: number;
-  question_id: number;
-  number: number;
-  text_value: string;
-  img_url: string | null;
-}>;
-
-const DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE = `WITH survey_questions_options AS (
-	SELECT
-		qo.id,
-		qo.question_id,
-		qo.number,
-		qo.text_value,
-		qo.img_url
-	FROM questions_options qo
-	INNER JOIN questions q ON qo.question_id = q.id
-	WHERE q.survey_id = ?
-)
-SELECT json_group_object(
-	id,
-	json_object(
-		'question_id', question_id, 
-		'number', number, 
-		'text_value', text_value, 
-		'img_url', img_url
-	)
-) AS record
-FROM survey_questions_options`;
-
-const dbSelectQuestionOptions = async (
-  env: QuizBindings,
-  survey_id: number,
-): Promise<SelectQuestionOptions> => {
-  const db = env.MAIN_DB;
-  const result = await db.prepare(DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE).bind(survey_id).all<
-    SelectQuestionOptionsJson
-  >();
-  return JSON.parse(result.results[0].record) as SelectQuestionOptions;
-};
-
-const DATABASE_INSERT_SUBMITTED = `INSERT INTO submitted (
-	date
-) VALUES (?)`;
-
-const dbInsertSubmitted = async (env: QuizBindings, date: string): Promise<number> => {
-  const db = env.MAIN_DB;
-  const result = await db.prepare(DATABASE_INSERT_SUBMITTED).bind(date).run();
-  return result.meta.last_row_id;
-};
-
-const DATABASE_INSERT_SUBMITTED_ANSWER = `INSERT INTO submitted_answer (
-	submitted_id,
-	question_id,
-	json_answer
-) VALUES (?, ?, ?)`;
-
-type SubmitRequest = z_infer<typeof api.SubmitRequest>;
-
-const dbInsertSubmittedAnswers = async (
-  env: QuizBindings,
-  submitted_id: number,
-  answers: SubmitRequest["answers"],
-): Promise<void> => {
-  const db = env.MAIN_DB;
-  const stmt_template = db.prepare(DATABASE_INSERT_SUBMITTED_ANSWER);
-  const stmts = answers.map((answer) =>
-    stmt_template.bind(submitted_id, answer.question_id, answer.json_answer)
-  );
-  await db.batch(stmts);
-};
 
 //- Default export
 
