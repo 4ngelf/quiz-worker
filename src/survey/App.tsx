@@ -80,7 +80,7 @@ const fetchQuestions = (survey_id: number) =>
   apiFetch(`/api/${survey_id}/questions`, isValidQuestionsResponse);
 
 const isValidQuestionsResponse = (response: any): response is QuestionsResponse => {
-  const result = api.QuestionsResponse.safeParse(response);
+  const result = schema.QuestionsResponse.safeParse(response);
   return result.success;
 };
 
@@ -106,7 +106,7 @@ const makeSubmitAnswerForText = (
   large: boolean,
 ): SubmitAnswer => {
   const answer: JsonAnswer = {
-    type: api.AnswerType.Text,
+    type: schema.AnswerType.Text,
     large: large,
     text: text,
   };
@@ -121,7 +121,7 @@ const makeSubmitAnswerForMultiple = (
   question_option_id: number,
 ): SubmitAnswer => {
   const answer: JsonAnswer = {
-    type: api.AnswerType.Multiple,
+    type: schema.AnswerType.Multiple,
     question_option_id: question_option_id,
   };
   return {
@@ -249,7 +249,7 @@ function App() {
     const r = await api_client.api.$get();
     if (r.ok) {
       const data = await r.json() as z_infer<typeof schema.SuccessResponse>;
-      console.log("oh no no");
+      console.log("received");
     }
 
     console.log("oh no");
@@ -491,116 +491,116 @@ const LoadingQuestionsBlock = () => {
   return <span>wahhh</span>;
 };
 
-type SurveyBodyProps = {
-  questions: QuizQuestion[];
-  submitting: boolean;
-  answers: Record<number, string>;
-  options: QuizQuestionOption[];
-  onSubmit: () => void;
-  onTextAnswer: (questionId: number, value: string) => void;
-  onSelectOption: (questionId: number, optionId: number) => void;
-};
+// type SurveyBodyProps = {
+//   questions: QuizQuestion[];
+//   submitting: boolean;
+//   answers: Record<number, string>;
+//   options: QuizQuestionOption[];
+//   onSubmit: () => void;
+//   onTextAnswer: (questionId: number, value: string) => void;
+//   onSelectOption: (questionId: number, optionId: number) => void;
+// };
+//
+// function SurveyBody(props: SurveyBodyProps) {
+//   if (props.loading) {
+//     return <p class="status">Loading survey questions…</p>;
+//   }
+//
+//   if (props.questions.length === 0) {
+//     return <p class="empty-state">No questions are available for this survey yet.</p>;
+//   }
+//
+//   return (
+//     <form
+//       onSubmit={(event) => {
+//         event.preventDefault();
+//         props.onSubmit();
+//       }}
+//     >
+//       <For each={props.questions}>
+//         {(question) => {
+//           const selectedValue = props.answers[question.id] ?? "";
+//           const questionChoices = props.options
+//             .filter((option) => option.question_id === question.id)
+//             .sort((left, right) => left.number - right.number);
+//
+//           return (
+//             <QuestionCard
+//               question={question}
+//               selectedValue={selectedValue}
+//               questionChoices={questionChoices}
+//               onTextAnswer={props.onTextAnswer}
+//               onSelectOption={props.onSelectOption}
+//             />
+//           );
+//         }}
+//       </For>
+//       <button class="submit-button" type="submit" disabled={props.submitting}>
+//         {props.submitting ? "Submitting…" : "Submit response"}
+//       </button>
+//     </form>
+//   );
+// }
 
-function SurveyBody(props: SurveyBodyProps) {
-  if (props.loading) {
-    return <p class="status">Loading survey questions…</p>;
-  }
-
-  if (props.questions.length === 0) {
-    return <p class="empty-state">No questions are available for this survey yet.</p>;
-  }
-
-  return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        props.onSubmit();
-      }}
-    >
-      <For each={props.questions}>
-        {(question) => {
-          const selectedValue = props.answers[question.id] ?? "";
-          const questionChoices = props.options
-            .filter((option) => option.question_id === question.id)
-            .sort((left, right) => left.number - right.number);
-
-          return (
-            <QuestionCard
-              question={question}
-              selectedValue={selectedValue}
-              questionChoices={questionChoices}
-              onTextAnswer={props.onTextAnswer}
-              onSelectOption={props.onSelectOption}
-            />
-          );
-        }}
-      </For>
-      <button class="submit-button" type="submit" disabled={props.submitting}>
-        {props.submitting ? "Submitting…" : "Submit response"}
-      </button>
-    </form>
-  );
-}
-
-type QuestionCardProps = {
-  question: QuizQuestion;
-  selectedValue: string;
-  questionChoices: QuizQuestionOption[];
-  onTextAnswer: (questionId: number, value: string) => void;
-  onSelectOption: (questionId: number, optionId: number) => void;
-};
-
-function QuestionCard(props: QuestionCardProps) {
-  const questionId = props.question.id;
-  const selectedValue = props.selectedValue ?? "";
-
-  return (
-    <article class="question-card">
-      <div class="question-header">
-        <p class="question-type">
-          {props.question.type === AnswerType.MultipleChoice ? "Multiple choice" : "Text response"}
-        </p>
-        <h2>{props.question.question}</h2>
-      </div>
-      {props.question.body_text ? <p class="question-body">{props.question.body_text}</p> : null}
-      {props.question.img_url
-        ? (
-          <img
-            class="question-image"
-            src={props.question.img_url}
-            alt={props.question.question}
-          />
-        )
-        : null}
-      {props.question.type === AnswerType.Text
-        ? (
-          <textarea
-            class="text-input"
-            placeholder="Type your answer here"
-            value={selectedValue}
-            onInput={(event) => props.onTextAnswer(questionId, event.currentTarget.value)}
-          >
-          </textarea>
-        )
-        : (
-          <div class="options-grid">
-            <For each={props.questionChoices}>
-              {(option) => (
-                <button
-                  type="button"
-                  class={`option-button ${
-                    selectedValue === String(option.number) ? "selected" : ""
-                  }`}
-                  onClick={() => props.onSelectOption(questionId, option.number)}
-                >
-                  {option.text_value}
-                </button>
-              )}
-            </For>
-          </div>
-        )}
-    </article>
-  );
-}
-
+// type QuestionCardProps = {
+//   question: QuizQuestion;
+//   selectedValue: string;
+//   questionChoices: QuizQuestionOption[];
+//   onTextAnswer: (questionId: number, value: string) => void;
+//   onSelectOption: (questionId: number, optionId: number) => void;
+// };
+//
+// function QuestionCard(props: QuestionCardProps) {
+//   const questionId = props.question.id;
+//   const selectedValue = props.selectedValue ?? "";
+//
+//   return (
+//     <article class="question-card">
+//       <div class="question-header">
+//         <p class="question-type">
+//           {props.question.type === AnswerType.MultipleChoice ? "Multiple choice" : "Text response"}
+//         </p>
+//         <h2>{props.question.question}</h2>
+//       </div>
+//       {props.question.body_text ? <p class="question-body">{props.question.body_text}</p> : null}
+//       {props.question.img_url
+//         ? (
+//           <img
+//             class="question-image"
+//             src={props.question.img_url}
+//             alt={props.question.question}
+//           />
+//         )
+//         : null}
+//       {props.question.type === AnswerType.Text
+//         ? (
+//           <textarea
+//             class="text-input"
+//             placeholder="Type your answer here"
+//             value={selectedValue}
+//             onInput={(event) => props.onTextAnswer(questionId, event.currentTarget.value)}
+//           >
+//           </textarea>
+//         )
+//         : (
+//           <div class="options-grid">
+//             <For each={props.questionChoices}>
+//               {(option) => (
+//                 <button
+//                   type="button"
+//                   class={`option-button ${
+//                     selectedValue === String(option.number) ? "selected" : ""
+//                   }`}
+//                   onClick={() => props.onSelectOption(questionId, option.number)}
+//                 >
+//                   {option.text_value}
+//                 </button>
+//               )}
+//             </For>
+//           </div>
+//         )}
+//     </article>
+//   );
+// }
+//
 export default App;
