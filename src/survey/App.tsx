@@ -9,6 +9,7 @@ import {
   Match,
   onMount,
   Show,
+  splitProps,
   Switch,
   useContext,
 } from "solid-js";
@@ -16,7 +17,9 @@ import { createStore } from "solid-js/store";
 import { hc } from "hono/client";
 
 import type { infer as z_infer } from "zod/mini";
-import type * as api from "@worker/index.ts";
+
+import type { API } from "@worker/index.ts";
+import * as schema from "@worker/schema.ts";
 
 //# Assets
 
@@ -24,27 +27,27 @@ import "./App.css";
 
 //# API Layer
 
-const client = hc<api.API>("https://client");
+const api_client = hc<API>("/");
 
 //## Common types
 
-type SuccessResponse = z_infer<typeof api.SuccessResponse>;
-type QuestionsResponse = z_infer<typeof api.QuestionsResponse>;
+type SuccessResponse = z_infer<typeof schema.SuccessResponse>;
+type QuestionsResponse = z_infer<typeof schema.QuestionsResponse>;
 
-type SubmitRequest = z_infer<typeof api.SubmitRequest>;
+type SubmitRequest = z_infer<typeof schema.SubmitRequest>;
 type SubmitAnswer = SubmitRequest["answers"][number];
-type JsonAnswer = z_infer<typeof api.JsonAnswer>;
+type JsonAnswer = z_infer<typeof schema.JsonAnswer>;
 
 //## Fetching and processing
 
-const isValidSuccessResponse = (response: any): response is StartResponse => {
-  const result = api.SuccessResponse.safeParse(response);
+const isValidSuccessResponse = (response: unknown): response is SuccessResponse => {
+  const result = schema.SuccessResponse.safeParse(response);
   return result.success;
 };
 
 const apiFetch = async <T,>(
   url: string,
-  validate_response_fn: (r: any) => r is T,
+  validate_response_fn: (r: unknown) => r is T,
   fetch_opts?: RequestInit,
 ): Promise<T> => {
   const response = await fetch(url, fetch_opts);
@@ -60,24 +63,16 @@ const apiFetch = async <T,>(
   return data;
 };
 
-const apiFetchPostJson = async <T,>(
+const apiFetchPostJson = <T,>(
   url: string,
-  validate_response_fn: (r: any) => r is T,
-  json_object: any,
+  validate_response_fn: (r: unknown) => r is T,
+  json_object: unknown,
 ): Promise<T> =>
   apiFetch(url, validate_response_fn, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(json_object),
   });
-
-//## /api/admin/start
-
-type StartResponse = SuccessResponse;
-
-const fetchStart = () => apiFetch("/api/admin/start", isValidStartResponse);
-
-const isValidStartResponse: (r: any) => r is StartResponse = isValidSuccessResponse;
 
 //## /api/{survey_id}/questions
 
@@ -143,7 +138,7 @@ type QuestionId = string;
 type OptionId = string;
 
 // Internal representation for responseQuestions
-type AppQuestionsResponse = z_infer<typeof api.QuestionsResponse>;
+type AppQuestionsResponse = z_infer<typeof schema.QuestionsResponse>;
 
 type AppSubmitAnswers = Record<QuestionId, JsonAnswer>;
 
@@ -153,16 +148,16 @@ const makeAppSubmitAnswers = (aqr: AppQuestionsResponse): AppSubmitAnswers => {
   for (const [question_id, question] of Object.entries(aqr.questions)) {
     let answer: JsonAnswer;
     switch (question.type) {
-      case api.AnswerType.Text:
+      case schema.AnswerType.Text:
         answer = {
-          type: api.AnswerType.Text,
+          type: schema.AnswerType.Text,
           large: false,
           text: "",
         };
         break;
-      case api.AnswerType.Multiple:
+      case schema.AnswerType.Multiple:
         answer = {
-          type: api.AnswerType.Multiple,
+          type: schema.AnswerType.Multiple,
           question_option_id: -1,
         };
         break;
@@ -233,16 +228,33 @@ type Status =
 function App() {
   //### Constants
 
-  const url_params = new URLSearchParams(window.location.search);
+  const url_params = new URLSearchParams(globalThis.location.search);
 
   const survey_id_param = url_params.get("survey_id") ?? "1";
-  const survey_id_result = api.Index.safeParse(Number(survey_id_param));
+  const survey_id_result = schema.Index.safeParse(Number(survey_id_param));
   const survey_id = survey_id_result.success ? survey_id_result.data : 0;
+
+  console.log(`survey loaded: ${survey_id}`);
 
   //### Signals
 
   // Custom message to notify the user about the status of the survey submission (e.g., success or failure).
   const [status, setStatus] = createSignal<Status>({ status: "init" });
+
+  const sleep = (time_millis: number) =>
+    new Promise((accept, _) => setTimeout(() => accept(undefined), time_millis));
+
+  createEffect(async () => {
+    await sleep(1000);
+    const r = await api_client.api.$get();
+    if (r.ok) {
+      const data = await r.json() as z_infer<typeof schema.SuccessResponse>;
+      console.log("oh no no");
+    }
+
+    console.log("oh no");
+    setStatus({ status: "error", message: "nope quest for yout" });
+  });
 
   // Control the current state of the application.
   // "init" - Initial state before/while loading the survey.
@@ -251,28 +263,28 @@ function App() {
   // "submit" - The survey is currently being submitted.
   // "error-submit" - An error occurred while submitting the answers.
   // "success-submit" - The survey has been successfully submitted.
-  // const [overallState, setOverallState] = createSignal<"init" | "error-init" | "success-init" | "submit" | "error-submit" | "success-submit">("init");
+  // const [overallState, setOverallState] = createSignal<
+  //   "init" | "error-init" | "success-init" | "submit" | "error-submit" | "success-submit"
+  // >("init");
 
   // The questions for the survey as is, later fetched from the API.
-  const [appQuestionsResponse] = createResource(async () => await fetchQuestions(survey_id));
+  // const [appQuestionsResponse] = createResource(async () => await fetchQuestions(survey_id));
 
   // Answers for each question
-  const [appSubmitAnswers, setAppSubmitAnswers] = createStore<AppSubmitAnswers>({});
+  // const [appSubmitAnswers, setAppSubmitAnswers] = createStore<AppSubmitAnswers>({});
 
-  createEffect(() => {
-    const aqr = appQuestionsResponse();
-    if (aqr) {
-      setAppSubmitAnswers(makeAppSubmitAnswers(aqr));
-      setStatus({ status: "questions-loaded" });
-    } else {
-      setAppSubmitAnswers({});
-      setStatus({ status: "init" });
-    }
-  });
+  // createEffect(() => {
+  //   const aqr = appQuestionsResponse();
+  //   if (aqr) {
+  //     setAppSubmitAnswers(makeAppSubmitAnswers(aqr));
+  //     setStatus({ status: "questions-loaded" });
+  //   } else {
+  //     setAppSubmitAnswers({});
+  //     setStatus({ status: "init" });
+  //   }
+  // });
 
   //### Helper functions
-
-  const shouldShowBody = () => status().status in ["error", "questions-loaded", "submitting"];
 
   // const [responseQuestions, setResponseQuestions] = createSignal<ResponseQuestions | null>(null);
 
@@ -422,16 +434,19 @@ function App() {
         <Match when={status().status == "init"}>
           <LoadingQuestionsBlock />
         </Match>
-        <Match when={shouldShowBody()}>
-          <SurveyBody
-            questions={questions()}
-            submitting={submitting()}
-            answers={answers()}
-            options={options()}
-            onSubmit={submitSurvey}
-            onTextAnswer={updateTextAnswer}
-            onSelectOption={selectOption}
-          />
+        <Match when={status().status in ["error", "questions-loaded", "submitting"]}>
+          <span>ok showing</span>
+          {
+            // <SurveyBody
+            //   questions={questions()}
+            //   submitting={submitting()}
+            //   answers={answers()}
+            //   options={options()}
+            //   onSubmit={submitSurvey}
+            //   onTextAnswer={updateTextAnswer}
+            //   onSelectOption={selectOption}
+            // -->
+          }
         </Match>
       </Switch>
     </main>
@@ -441,7 +456,10 @@ function App() {
 //## Subcomponents
 
 function DisplayStatusBlock(props: { status: Status }) {
-  const status = props.status;
+  const [{ status }] = splitProps(props, ["status"]);
+  createEffect(() => {
+    console.log(status);
+  });
   let message = null;
   switch (status.status) {
     case "init":
@@ -461,7 +479,7 @@ function DisplayStatusBlock(props: { status: Status }) {
 
   return (
     <Show when={message}>
-      <p class={style_classes}>
+      <p on:click={() => console.log(status)} class={style_classes}>
         {message}
       </p>
     </Show>
@@ -470,7 +488,7 @@ function DisplayStatusBlock(props: { status: Status }) {
 
 const LoadingQuestionsBlock = () => {
   // TODO: Loading animation
-  return <></>;
+  return <span>wahhh</span>;
 };
 
 type SurveyBodyProps = {

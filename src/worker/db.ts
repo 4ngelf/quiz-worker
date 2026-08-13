@@ -1,18 +1,20 @@
-//! Database schema and queries
+//! Database and queries
 
 import type { infer as z_infer } from "zod";
-import type * as api from "@worker/index.ts";
+
+import * as schema from "./schema.ts";
 
 export type SelectQuestionsJson = { record: string };
 export type SelectQuestions = Record<string, {
-  id: number;
+  id: string;
   type: number;
   question: string;
   body_text: string | null;
   img_url: string | null;
 }>;
 
-const DATABASE_SELECT_QUESTIONS = `WITH survey_questions AS (
+const DATABASE_SELECT_QUESTIONS = `
+WITH survey_questions AS (
 	SELECT * 
 	FROM questions
 	WHERE survey_id = ?
@@ -50,7 +52,8 @@ type SelectQuestionOptions = Record<string, {
   img_url: string | null;
 }>;
 
-const DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE = `WITH survey_questions_options AS (
+const DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE = `
+WITH survey_questions_options AS (
 	SELECT
 		qo.id,
 		qo.question_id,
@@ -83,9 +86,7 @@ export const selectQuestionOptions = async (
   return JSON.parse(result.results[0].record) as SelectQuestionOptions;
 };
 
-const DATABASE_INSERT_SUBMITTED = `INSERT INTO submitted (
-	date
-) VALUES (?)`;
+const DATABASE_INSERT_SUBMITTED = `INSERT INTO submitted (date) VALUES (?)`;
 
 export const insertSubmitted = async (env: Cloudflare.Env, date: string): Promise<number> => {
   const db = env.MAIN_DB;
@@ -93,23 +94,23 @@ export const insertSubmitted = async (env: Cloudflare.Env, date: string): Promis
   return result.meta.last_row_id;
 };
 
-const DATABASE_INSERT_SUBMITTED_ANSWER = `INSERT INTO submitted_answer (
+const DATABASE_INSERT_SUBMITTED_ANSWER = `
+INSERT INTO submitted_answer (
 	submitted_id,
 	question_id,
 	json_answer
 ) VALUES (?, ?, ?)`;
 
-export type SubmitRequest = z_infer<typeof api.SubmitRequest>;
-
 export const insertSubmittedAnswers = async (
   env: Cloudflare.Env,
   submitted_id: number,
-  answers: SubmitRequest["answers"],
+  answers: z_infer<typeof schema.SubmitRequest>["answers"],
 ): Promise<void> => {
   const db = env.MAIN_DB;
   const stmt_template = db.prepare(DATABASE_INSERT_SUBMITTED_ANSWER);
-  const stmts = answers.map((answer) =>
-    stmt_template.bind(submitted_id, answer.question_id, answer.json_answer)
-  );
+  const stmts = [];
+  for (const answer of answers) {
+    stmts.push(stmt_template.bind(submitted_id, answer.question_id, answer.json_answer));
+  }
   await db.batch(stmts);
 };
