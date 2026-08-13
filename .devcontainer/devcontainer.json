@@ -1,0 +1,14 @@
+{
+    "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+    "features": {
+        "ghcr.io/devcontainers/features/deno:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "denoland.vscode-deno"
+            ]
+        }
+    }
+}
