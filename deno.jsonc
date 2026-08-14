@@ -1,13 +1,15 @@
 {
   "tasks": {
-    "build": "deno -REWS --allow-run --allow-ffi npm:vite build",
+    "build": {
+      "command": "deno -REWS --allow-run --allow-ffi npm:vite build",
+      "files": ["src/**/*.ts", "src/**/*.tsx", "deno.jsonc"],
+      "output": ["dist/"],
+    },
 
     "preview": {
       "command": "deno -REWSN --allow-run --allow-ffi npm:vite preview",
       "dependencies": ["build"],
     },
-
-    "deploy": "deno --allow-env --allow-run npm:wrangler deploy",
 
     "dev:worker": {
       "command": "deno -RE --allow-run npm:wrangler dev",
@@ -19,6 +21,10 @@
     },
 
     // Backend mantainance tasks
+    "deploy": {
+      "command": "deno --allow-env --allow-run npm:wrangler deploy",
+      "dependencies": ["build"],
+    },
     "cf-typegen": "deno -E --allow-run npm:wrangler types",
     "migrations": "deno -E --allow-run npm:wrangler d1 migrations apply MAIN_DB",
     "migrations:local": "deno -E --allow-run npm:wrangler d1 migrations apply MAIN_DB --local",
