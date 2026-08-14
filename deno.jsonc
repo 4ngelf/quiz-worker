@@ -45,20 +45,21 @@
 
     // Dependencies
     "solid-js": "npm:solid-js@1.9.14",
+    "@solidjs/router": "npm:@solidjs/router@^1.0.0",
     "hono": "npm:hono@4.12.29",
     "@hono/standard-validator": "npm:@hono/standard-validator@^0.3.0",
     "zod": "npm:zod@^4.4.3",
 
     // Development dependencies
     "@cloudflare/vite-plugin": "npm:@cloudflare/vite-plugin@1.45.0",
-    "@deno/esbuild-plugin": "jsr:@deno/esbuild-plugin@^1.2.1",
     "@std/path": "jsr:@std/path@^1.1.1",
-    "esbuild": "npm:esbuild",
+    // "esbuild": "npm:esbuild",
+    // "@deno/esbuild-plugin": "jsr:@deno/esbuild-plugin@^1.2.1",
     "globals": "npm:globals@^17.0.0",
     "vite": "npm:vite@^6.0.0",
     "vite-plugin-solid": "npm:vite-plugin-solid@2.11.12",
-    "wrangler": "npm:wrangler@4.111.0"
-  },
+    "wrangler": "npm:wrangler@4.111.0",
+  }
   "minimumDependencyAge": {
     "age": "P7D"
   },

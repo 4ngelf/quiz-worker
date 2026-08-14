@@ -1,14 +1,11 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@deno/esbuild-plugin@^1.2.1": "1.2.1",
-    "jsr:@deno/loader@~0.3.10": "0.3.14",
     "jsr:@std/internal@^1.0.14": "1.0.14",
     "jsr:@std/path@^1.1.1": "1.1.6",
     "npm:@cloudflare/vite-plugin@1.45.0": "1.45.0_vite@6.4.3__@types+node@24.10.1_wrangler@4.111.0",
     "npm:@hono/standard-validator@0.3": "0.3.0_@standard-schema+spec@1.1.0_hono@4.12.29",
-    "npm:esbuild@*": "0.28.1",
-    "npm:esbuild@~0.25.5": "0.25.12",
+    "npm:@solidjs/router@1": "1.0.0_solid-js@1.9.14",
     "npm:globals@17": "17.9.0",
     "npm:hono@4.12.29": "4.12.29",
     "npm:solid-js@1.9.14": "1.9.14",
@@ -18,17 +15,6 @@
     "npm:zod@^4.4.3": "4.4.3"
   },
   "jsr": {
-    "@deno/esbuild-plugin@1.2.1": {
-      "integrity": "df629467913adc1f960149fdfa3a3430ba8c20381c310fba096db244e6c3c9f6",
-      "dependencies": [
-        "jsr:@deno/loader",
-        "jsr:@std/path",
-        "npm:esbuild@~0.25.5"
-      ]
-    },
-    "@deno/loader@0.3.14": {
-      "integrity": "97bc63a6cc2d27a60bcdc953f588c5213331d866d44212eebb24cebfb9b011ca"
-    },
     "@std/internal@1.0.14": {
       "integrity": "291516b3d4c35024d6ffbc0a9df5bf4c64116e05b50012cf846710152d2ffdf7"
     },
@@ -845,6 +831,12 @@
     "@sindresorhus/is@7.2.0": {
       "integrity": "sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw=="
     },
+    "@solidjs/router@1.0.0_solid-js@1.9.14": {
+      "integrity": "sha512-cCSk1hvgCowiMa9bzzYWHiLu1U4E22+DfJe6/rOwAyECKrxc3jrd5QnoW3sDDJtW+e077cz/M67bPl3DqOBw1Q==",
+      "dependencies": [
+        "solid-js"
+      ]
+    },
     "@speed-highlight/core@1.2.24": {
       "integrity": "sha512-qeW2e1l78afw8VhRPfPQ1Gjj+KU5XFQ/OFV5ti6eTa9bruO7mJyZtA4vw0ofqmA3tKCkROE9xLk3VZoeRc98nw=="
     },
@@ -1372,11 +1364,10 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@deno/esbuild-plugin@^1.2.1",
       "jsr:@std/path@^1.1.1",
       "npm:@cloudflare/vite-plugin@1.45.0",
       "npm:@hono/standard-validator@0.3",
-      "npm:esbuild@*",
+      "npm:@solidjs/router@1",
       "npm:globals@17",
       "npm:hono@4.12.29",
       "npm:solid-js@1.9.14",

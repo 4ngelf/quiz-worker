@@ -13,6 +13,7 @@ import {
 } from "solid-js";
 import type { Setter } from "solid-js";
 import { createStore } from "solid-js/store";
+import { useParams } from "@solidjs/router";
 import { hc } from "hono/client";
 import type { infer as z_infer } from "zod/mini";
 
@@ -128,11 +129,11 @@ type Status =
   | { status: "submitting" }
   | { status: "submitted" };
 
-function App() {
+const App = () => {
   //### Constants
 
-  const url_params = new URLSearchParams(globalThis.location.search);
-  const survey_id = url_params.get("survey_id") ?? "1";
+  const params = useParams();
+  const survey_id = params.survey_id!;
 
   console.log(`survey loaded: ${survey_id}`);
 
@@ -264,7 +265,7 @@ function App() {
       </Suspense>
     </main>
   );
-}
+};
 
 const QuestionsBodyBlock = (props: {
   questions_data: processed.Questions;
