@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS submitted (
 
 CREATE TABLE IF NOT EXISTS submitted_answer (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  submitted_id INTEGER NOT NULL UNIQUE,
+  submitted_id INTEGER NOT NULL,
   question_id INTEGER NOT NULL,
   json_answer TEXT NOT NULL,
   FOREIGN KEY (submitted_id) REFERENCES submitted(id)

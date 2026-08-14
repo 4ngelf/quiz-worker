@@ -28,6 +28,7 @@
     "cf-typegen": "deno -E --allow-run npm:wrangler types",
     "migrations": "deno -E --allow-run npm:wrangler d1 migrations apply MAIN_DB",
     "migrations:local": "deno -E --allow-run npm:wrangler d1 migrations apply MAIN_DB --local",
+    "seed:local": "deno -E --allow-run npm:wrangler d1 execute MAIN_DB --file=survey_seed.sql",
 
     // Codebase mantainance tasks
     "lint": "deno lint",
