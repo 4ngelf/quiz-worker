@@ -9,17 +9,24 @@
 
     "deploy": "deno --allow-env --allow-run npm:wrangler deploy",
 
-    "dev:worker": "deno -RE --allow-run npm:wrangler dev",
+    "dev:worker": {
+      "command": "deno -RE --allow-run npm:wrangler dev",
+      "dependencies": ["build"],
+    },
     "dev:frontend": "deno -REWSN --allow-run --allow-ffi npm:vite dev", // -REWS --allow-run --allow-ffi 
     "dev": {
       "dependencies": ["dev:worker", "dev:frontend"]
     },
 
-    // Mantainance tasks
+    // Backend mantainance tasks
+    "cf-typegen": "deno -E --allow-run npm:wrangler types",
+    "migrations": "deno -E --allow-run npm:wrangler d1 migrations apply MAIN_DB",
+    "migrations:local": "deno -E --allow-run npm:wrangler d1 migrations apply MAIN_DB --local",
+
+    // Codebase mantainance tasks
     "lint": "deno lint",
     "fmt": "deno fmt",
     "clean": "rm -rf ./dist ./.wrangler",
-    "cf-typegen": "deno -E --allow-run npm:wrangler types"
   },
 
   "imports": {

@@ -98,7 +98,7 @@ export const JsonAnswerFromString = pipe(
 export const SubmitRequest = object({
   date: string(),
   answers: array(object({
-    question_id: Index,
+    question_id: StringIndex,
     json_answer: string(),
   })),
 });

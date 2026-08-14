@@ -29,11 +29,11 @@ const app = new Hono<{ Bindings: Cloudflare.Env }>()
   //
   // Check api is alive
   //
-  .get<"/api">("/api", (c) => c.json(SuccessResponseValue))
+  .get("/api", (c) => c.json(SuccessResponseValue))
   //
   // Get list of questions
   //
-  .get<"/api/survey/:survey_id/questions">("/api/survey/:survey_id/questions", async (c) => {
+  .get("/api/survey/:survey_id/questions", async (c) => {
     const [survey_id, parse_error] = parseId(c.req.param("survey_id"));
     if (parse_error) return c.json(parse_error, 400);
 

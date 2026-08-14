@@ -10,9 +10,11 @@ import {
   onMount,
   Show,
   splitProps,
+  Suspense,
   Switch,
   useContext,
 } from "solid-js";
+import type { Setter } from "solid-js";
 import { createStore } from "solid-js/store";
 import { hc } from "hono/client";
 
@@ -31,122 +33,124 @@ const api_client = hc<API>("/");
 
 //## Common types
 
-type SuccessResponse = z_infer<typeof schema.SuccessResponse>;
-type QuestionsResponse = z_infer<typeof schema.QuestionsResponse>;
-
-type SubmitRequest = z_infer<typeof schema.SubmitRequest>;
-type SubmitAnswer = SubmitRequest["answers"][number];
-type JsonAnswer = z_infer<typeof schema.JsonAnswer>;
-
-//## Fetching and processing
-
-const isValidSuccessResponse = (response: unknown): response is SuccessResponse => {
-  const result = schema.SuccessResponse.safeParse(response);
-  return result.success;
-};
-
-const apiFetch = async <T,>(
-  url: string,
-  validate_response_fn: (r: unknown) => r is T,
-  fetch_opts?: RequestInit,
-): Promise<T> => {
-  const response = await fetch(url, fetch_opts);
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch data from '${url}' with ${response.status} '${response.statusText}'`,
-    );
-  }
-  const data = await response.json();
-  if (!validate_response_fn(data)) {
-    throw new Error(`Validation failed for response received from '${url}'`);
-  }
-  return data;
-};
-
-const apiFetchPostJson = <T,>(
-  url: string,
-  validate_response_fn: (r: unknown) => r is T,
-  json_object: unknown,
-): Promise<T> =>
-  apiFetch(url, validate_response_fn, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(json_object),
-  });
-
-//## /api/{survey_id}/questions
-
-const fetchQuestions = (survey_id: number) =>
-  apiFetch(`/api/${survey_id}/questions`, isValidQuestionsResponse);
-
-const isValidQuestionsResponse = (response: any): response is QuestionsResponse => {
-  const result = schema.QuestionsResponse.safeParse(response);
-  return result.success;
-};
-
-//## /api/submit
-
-type SubmitResponse = SuccessResponse;
-
-const fetchSubmit = (answers: SubmitAnswer[]) =>
-  apiFetchPostJson("/api/submit", isValidSubmitResponse, makeSubmitRequest(answers));
-
-const isValidSubmitResponse: (r: any) => r is SubmitResponse = isValidSuccessResponse;
-
-const makeSubmitRequest = (answers: SubmitAnswer[]): SubmitRequest => {
-  return {
-    date: new Date().toISOString(),
-    answers: answers,
-  };
-};
-
-const makeSubmitAnswerForText = (
-  question_id: number,
-  text: string,
-  large: boolean,
-): SubmitAnswer => {
-  const answer: JsonAnswer = {
-    type: schema.AnswerType.Text,
-    large: large,
-    text: text,
-  };
-  return {
-    question_id: question_id,
-    json_answer: JSON.stringify(answer),
-  };
-};
-
-const makeSubmitAnswerForMultiple = (
-  question_id: number,
-  question_option_id: number,
-): SubmitAnswer => {
-  const answer: JsonAnswer = {
-    type: schema.AnswerType.Multiple,
-    question_option_id: question_option_id,
-  };
-  return {
-    question_id: question_id,
-    json_answer: JSON.stringify(answer),
-  };
-};
+// type SuccessResponse = z_infer<typeof schema.SuccessResponse>;
+// type QuestionsResponse = z_infer<typeof schema.QuestionsResponse>;
+//
+// type SubmitRequest = z_infer<typeof schema.SubmitRequest>;
+// type SubmitAnswer = SubmitRequest["answers"][number];
+// type JsonAnswer = z_infer<typeof schema.JsonAnswer>;
+//
+// //## Fetching and processing
+//
+// const isValidSuccessResponse = (response: unknown): response is SuccessResponse => {
+//   const result = schema.SuccessResponse.safeParse(response);
+//   return result.success;
+// };
+//
+// const apiFetch = async <T,>(
+//   url: string,
+//   validate_response_fn: (r: unknown) => r is T,
+//   fetch_opts?: RequestInit,
+// ): Promise<T> => {
+//   const response = await fetch(url, fetch_opts);
+//   if (!response.ok) {
+//     throw new Error(
+//       `Failed to fetch data from '${url}' with ${response.status} '${response.statusText}'`,
+//     );
+//   }
+//   const data = await response.json();
+//   if (!validate_response_fn(data)) {
+//     throw new Error(`Validation failed for response received from '${url}'`);
+//   }
+//   return data;
+// };
+//
+// const apiFetchPostJson = <T,>(
+//   url: string,
+//   validate_response_fn: (r: unknown) => r is T,
+//   json_object: unknown,
+// ): Promise<T> =>
+//   apiFetch(url, validate_response_fn, {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify(json_object),
+//   });
+//
+// //## /api/{survey_id}/questions
+//
+// const fetchQuestions = (survey_id: number) =>
+//   apiFetch(`/api/${survey_id}/questions`, isValidQuestionsResponse);
+//
+// const isValidQuestionsResponse = (response: any): response is QuestionsResponse => {
+//   const result = schema.QuestionsResponse.safeParse(response);
+//   return result.success;
+// };
+//
+// //## /api/submit
+//
+// type SubmitResponse = SuccessResponse;
+//
+// const fetchSubmit = (answers: SubmitAnswer[]) =>
+//   apiFetchPostJson("/api/submit", isValidSubmitResponse, makeSubmitRequest(answers));
+//
+// const isValidSubmitResponse: (r: any) => r is SubmitResponse = isValidSuccessResponse;
+//
+// const makeSubmitRequest = (answers: SubmitAnswer[]): SubmitRequest => {
+//   return {
+//     date: new Date().toISOString(),
+//     answers: answers,
+//   };
+// };
+//
+// const makeSubmitAnswerForText = (
+//   question_id: number,
+//   text: string,
+//   large: boolean,
+// ): SubmitAnswer => {
+//   const answer: JsonAnswer = {
+//     type: schema.AnswerType.Text,
+//     large: large,
+//     text: text,
+//   };
+//   return {
+//     question_id: question_id,
+//     json_answer: JSON.stringify(answer),
+//   };
+// };
+//
+// const makeSubmitAnswerForMultiple = (
+//   question_id: number,
+//   question_option_id: number,
+// ): SubmitAnswer => {
+//   const answer: JsonAnswer = {
+//     type: schema.AnswerType.Multiple,
+//     question_option_id: question_option_id,
+//   };
+//   return {
+//     question_id: question_id,
+//     json_answer: JSON.stringify(answer),
+//   };
+// };
 
 //# Frontend Components
 
 //## State manipulation
 
 type QuestionId = string;
-type OptionId = string;
 
 // Internal representation for responseQuestions
-type AppQuestionsResponse = z_infer<typeof schema.QuestionsResponse>;
+type QuestionsResponse = z_infer<typeof schema.QuestionsResponse>;
+type SubmitRequest = z_infer<typeof schema.SubmitRequest>;
+type JsonAnswerValue = z_infer<typeof schema.JsonAnswer>;
+type SuccessResponse = z_infer<typeof schema.SuccessResponse>;
 
-type AppSubmitAnswers = Record<QuestionId, JsonAnswer>;
+type AnswersData = Record<QuestionId, JsonAnswerValue>;
 
-const makeAppSubmitAnswers = (aqr: AppQuestionsResponse): AppSubmitAnswers => {
-  const ret: AppSubmitAnswers = {};
+const makeAnswersData = (qr: QuestionsResponse): AnswersData => {
+  const ret: AnswersData = {};
 
-  for (const [question_id, question] of Object.entries(aqr.questions)) {
-    let answer: JsonAnswer;
+  for (const [question_id, question] of Object.entries(qr.questions)) {
+    let answer: JsonAnswerValue;
     switch (question.type) {
       case schema.AnswerType.Text:
         answer = {
@@ -171,57 +175,27 @@ const makeAppSubmitAnswers = (aqr: AppQuestionsResponse): AppSubmitAnswers => {
   return ret;
 };
 
-// Assumes that response.options is ordered by question_id
-// const makeStateFromResponseQuestions = (response: ResponseQuestions): AppAllQuestionsState => {
-// 	const ret: AppAllQuestionsState = {};
+const processAnswersData = (ad: AnswersData): SubmitRequest => {
+  const date = new Date().toISOString();
+  const answers: SubmitRequest["answers"] = [];
+  for (const [question_id, answer] of Object.entries(ad)) {
+    answers.push({
+      question_id: question_id,
+      json_answer: JSON.stringify(answer),
+    });
+  }
 
-// 	for (const question of response.questions) {
-// 		let state: AppQuestionState;
-// 		switch (question.type) {
-// 			case AnswerType.Text:
-// 				state = {
-// 					answer: { large: false, text: "" } as AnswerForText,
-// 				};
-// 				break;
-// 			case AnswerType.MultipleChoice:
-// 				state = {
-// 					answer: { question_option_multiple_id: -1 } as AnswerForMultiple,
-// 					options_if_multiple: [],
-// 				};
-// 				break;
-// 			default:
-// 				throw new Error(`Unknown type '${question.type}' from question 'id: ${question.id}'`);
-// 		}
-// 		ret[question.id] = state;
-// 	}
+  return { date: date, answers: answers };
+};
 
-// 	let sort_list: Set<QuestionId> = new Set();
-// 	for (let option_index = 0; option_index < response.options.length; option_index += 1) {
-// 		const option = response.options[option_index];
-// 		sort_list.add(option.question_id);
-
-// 		ret[option.question_id].options_if_multiple!.push(option_index);
-// 	}
-
-// 	const compare_options_by_number = (a: OptionIndex, b: OptionIndex) => {
-// 		const a_number = response.options[a].number;
-// 		const b_number = response.options[b].number;
-// 		return a_number - b_number;
-// 	};
-// 	for (const question_id of sort_list.keys()) {
-// 		ret[question_id].options_if_multiple!.sort(compare_options_by_number)
-// 	}
-
-// 	return ret;
-// };
+const sleepPromise = (milliseconds: number): Promise<void> =>
+  new Promise((accept) => setTimeout(() => accept(undefined), milliseconds));
 
 //## Main Component
 
 type Status =
-  | { status: "init" }
   | { status: "fatal"; message: string }
   | { status: "error"; message: string }
-  | { status: "questions-loaded" }
   | { status: "submitting" }
   | { status: "submitted" };
 
@@ -229,32 +203,112 @@ function App() {
   //### Constants
 
   const url_params = new URLSearchParams(globalThis.location.search);
-
-  const survey_id_param = url_params.get("survey_id") ?? "1";
-  const survey_id_result = schema.Index.safeParse(Number(survey_id_param));
-  const survey_id = survey_id_result.success ? survey_id_result.data : 0;
+  const survey_id = url_params.get("survey_id") ?? "1";
 
   console.log(`survey loaded: ${survey_id}`);
 
   //### Signals
 
-  // Custom message to notify the user about the status of the survey submission (e.g., success or failure).
-  const [status, setStatus] = createSignal<Status>({ status: "init" });
+  const [getStatus, setStatus] = createSignal<Status | null>(null);
+  const [answers_data, setAnswersData] = createStore<AnswersData>({});
+  const [getSubmitPayload, setSubmitPayload] = createSignal<SubmitRequest | null>(null);
 
-  const sleep = (time_millis: number) =>
-    new Promise((accept, _) => setTimeout(() => accept(undefined), time_millis));
+  //### Api resources
 
-  createEffect(async () => {
-    await sleep(1000);
-    const r = await api_client.api.$get();
-    if (r.ok) {
-      const data = await r.json() as z_infer<typeof schema.SuccessResponse>;
-      console.log("received");
+  const fetchQuestions = async (survey_id: string) => {
+    // await sleepPromise(1000);
+
+    const r = await api_client.api.survey[":survey_id"].questions.$get({
+      param: { survey_id: survey_id },
+    });
+    if (!r.ok) throw new Error("Falla al recibir preguntas de la encuesta");
+
+    const questions_response_json = await r.json();
+    const questions = schema.QuestionsResponse.safeParse(questions_response_json);
+    if (!questions.success) {
+      throw new Error(
+        `Falla al procesar preguntas de la encuesta.\nError: ${questions.error}`,
+      );
     }
 
-    console.log("oh no");
-    setStatus({ status: "error", message: "nope quest for yout" });
-  });
+    setAnswersData(makeAnswersData(questions.data));
+
+    return questions.data;
+  };
+
+  const fetchSubmit = async (submit_payload: SubmitRequest | null) => {
+    if (!submit_payload) return;
+
+    const r = await api_client.api.survey.submit.$post({
+      json: submit_payload,
+    });
+
+    let failed = false;
+    if (r.ok) {
+      const rj = await r.json() as SuccessResponse;
+      if (!rj.success) {
+        failed = true;
+      }
+    } else {
+      failed = true;
+    }
+    if (failed) throw new Error("Falla al subir tus respuestas.");
+
+    setStatus({ status: "submitted" });
+  };
+
+  const [getQuestionsData] = createResource(() => survey_id, fetchQuestions);
+  const [_, _submitDataMethods] = createResource(getSubmitPayload, fetchSubmit);
+
+  //### Helper functions
+
+  const isSubmitting = () => {
+    const status = getStatus();
+    return status ? status.status == "submitting" : false;
+  };
+
+  const checkedAllAnswers = () => {
+    for (const [_, answer] of Object.entries(answers_data)) {
+      switch (answer.type) {
+        case schema.AnswerType.Text:
+          if (answer.text === "") return false;
+          break;
+        case schema.AnswerType.Multiple:
+          if (answer.question_option_id === -1) return false;
+          break;
+        default:
+          throw new Error("Programming error: Answer type not handled");
+      }
+    }
+    return true;
+  };
+
+  //### Events
+
+  const onAnswerSetAnswersData = (question_id: number, answer_value: JsonAnswerValue): void => {
+    const question_key = question_id.toString(10);
+    if (answers_data[question_key].type != answer_value.type) {
+      setStatus({
+        status: "error",
+        message:
+          `Programming error: Answer Type does not correspond to question type for id ${question_id}`,
+      });
+      return;
+    }
+
+    setAnswersData(question_key, answer_value);
+    console.debug(`Question(${question_key}) = ${answer_value}`);
+  };
+
+  const onSubmitAnswers = (_: Event) => {
+    if (!checkedAllAnswers()) {
+      setStatus({ status: "error", message: "Todavia hay preguntas sin responder" });
+      return;
+    }
+    setStatus({ status: "submitting" });
+    const submit_request = processAnswersData(answers_data);
+    setSubmitPayload(submit_request);
+  };
 
   // Control the current state of the application.
   // "init" - Initial state before/while loading the survey.
@@ -417,6 +471,7 @@ function App() {
   // 	} finally {
   // 		setSubmitting(false);
   // 	}
+  //
   // };
 
   //### Render
@@ -428,67 +483,136 @@ function App() {
         <h1>Share your feedback</h1>
       </section>
 
-      <DisplayStatusBlock status={status()} />
-
-      <Switch>
-        <Match when={status().status == "init"}>
-          <LoadingQuestionsBlock />
-        </Match>
-        <Match when={status().status in ["error", "questions-loaded", "submitting"]}>
-          <span>ok showing</span>
-          {
-            // <SurveyBody
-            //   questions={questions()}
-            //   submitting={submitting()}
-            //   answers={answers()}
-            //   options={options()}
-            //   onSubmit={submitSurvey}
-            //   onTextAnswer={updateTextAnswer}
-            //   onSelectOption={selectOption}
-            // -->
-          }
-        </Match>
-      </Switch>
+      <DisplayStatusBlock status={getStatus()} />
+      <Suspense fallback={<LoadingQuestionsBlock />}>
+        <Show when={getQuestionsData.state === "ready"}>
+          <QuestionsBodyBlock
+            questions_data={getQuestionsData() as QuestionsResponse}
+            setStatus={setStatus}
+            onAnswer={onAnswerSetAnswersData}
+          />
+        </Show>
+        <SubmitButtonBlock onClick={onSubmitAnswers} disabled={isSubmitting()} />
+      </Suspense>
     </main>
   );
 }
 
-//## Subcomponents
+const QuestionsBodyBlock = (props: {
+  questions_data: QuestionsResponse;
+  setStatus: Setter<Status | null>;
+  onAnswer: (question_id: number, answer_value: JsonAnswerValue) => void;
+}) => {
+  return (
+    <div>
+      <For each={Object.values(props.questions_data.questions)}>
+        {(item, key) => (
+          <div>
+            #{JSON.stringify(item)} = {key()}
+          </div>
+        )}
+      </For>
+    </div>
+  );
+};
 
-function DisplayStatusBlock(props: { status: Status }) {
-  const [{ status }] = splitProps(props, ["status"]);
-  createEffect(() => {
-    console.log(status);
-  });
-  let message = null;
-  switch (status.status) {
-    case "init":
-      message = "Cargando preguntas...";
-      break;
-    case "error":
-    case "fatal":
-      message = status.message;
-      break;
-    case "submitted":
-      message = "Gracias! Respuestas enviadas!";
-      break;
-  }
-  const style_classes = !(status.status in ["error", "fatal"])
-    ? "status success"
-    : "status warning";
+const QuestionCardBlock = (props: {
+  question: QuestionsResponse["questions"][string];
+}) => {
+  // const questionId = props.question.id;
+  // const selectedValue = props.selectedValue ?? "";
 
   return (
-    <Show when={message}>
-      <p on:click={() => console.log(status)} class={style_classes}>
-        {message}
-      </p>
-    </Show>
+    <article class="question-card">
+      <div class="question-header">
+        <p class="question-type">
+          {props.question.type === schema.AnswerType.Multiple ? "Multiple choice" : "Text response"}
+        </p>
+        <h2>{props.question.question}</h2>
+      </div>
+      {props.question.body_text ? <p class="question-body">{props.question.body_text}</p> : null}
+      {props.question.img_url
+        ? (
+          <img
+            class="question-image"
+            src={props.question.img_url}
+            alt={props.question.question}
+          />
+        )
+        : null}
+    </article>
   );
-}
+};
+// {props.question.type === AnswerType.Text
+//   ? (
+//     <textarea
+//       class="text-input"
+//       placeholder="Type your answer here"
+//       value={selectedValue}
+//       onInput={(event) => props.onTextAnswer(questionId, event.currentTarget.value)}
+//     >
+//     </textarea>
+//   )
+//   : (
+//     <div class="options-grid">
+//       <For each={props.questionChoices}>
+//         {(option) => (
+//           <button
+//             type="button"
+//             class={`option-button ${
+//               selectedValue === String(option.number) ? "selected" : ""
+//             }`}
+//             onClick={() => props.onSelectOption(questionId, option.number)}
+//           >
+//             {option.text_value}
+//           </button>
+//         )}
+//       </For>
+//     </div>
+//   )}
+
+//## Subcomponents
 
 const LoadingQuestionsBlock = () => {
   // TODO: Loading animation
-  return <span>wahhh</span>;
+  return <span>Cargando preguntas...</span>;
+};
+
+const DisplayStatusBlock = (props: { status: Status | null }) => {
+  const [{ status }] = splitProps(props, ["status"]);
+  if (!status) return;
+
+  let message = null;
+  let style = null;
+  switch (status.status) {
+    case "error":
+    case "fatal":
+      message = status.message;
+      style = "status error";
+      break;
+    case "submitted":
+      message = "Gracias! Respuestas enviadas!";
+      style = "status success";
+      break;
+  }
+  if (!message) return;
+
+  return (
+    <p class={style ?? "status warning"}>
+      {message}
+    </p>
+  );
+};
+
+const SubmitButtonBlock = (props: {
+  onClick: (e: Event) => void;
+  disabled: boolean;
+}) => {
+  return (
+    <button on:click={props.onClick} class="submit-button" type="submit" disabled={props.disabled}>
+      Submit response
+    </button>
+  );
 };
 
 // type SurveyBodyProps = {

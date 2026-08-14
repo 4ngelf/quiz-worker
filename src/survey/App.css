@@ -34,13 +34,18 @@
 }
 
 .status.success {
-  background: rgba(51, 204, 125, 0.16);
+  background: rgba(51, 204, 125, 0.2);
   color: #c9ffd5;
 }
 
 .status.warning {
   background: rgba(255, 184, 77, 0.2);
   color: #ffe7bc;
+}
+
+.status.error {
+  background: rgba(255, 77, 77, 0.2);
+  color: #ffa7bc;
 }
 
 .question-card {
