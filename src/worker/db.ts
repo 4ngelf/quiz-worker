@@ -4,14 +4,16 @@ import type { infer as z_infer } from "zod";
 
 import * as schema from "./schema.ts";
 
-export type SelectQuestionsJson = { record: string };
-export type SelectQuestions = Record<string, {
-  id: string;
-  type: number;
-  question: string;
-  body_text: string | null;
-  img_url: string | null;
-}>;
+// Utilities
+
+type SqlJsonRecord = { record: string };
+
+// In case I need to change the binding for this database
+const getQuestionsDB = (env: Cloudflare.Env): D1Database => env.MAIN_DB;
+
+// Database manipulation
+
+export type SelectQuestions = z_infer<typeof schema.Question>;
 
 const DATABASE_SELECT_QUESTIONS = `
 WITH survey_questions AS (
@@ -35,22 +37,15 @@ export const selectQuestions = async (
   env: Cloudflare.Env,
   survey_id: number,
 ): Promise<SelectQuestions> => {
-  const db = env.MAIN_DB;
+  const db = getQuestionsDB(env);
   const result = await db
     .prepare(DATABASE_SELECT_QUESTIONS)
     .bind(survey_id)
-    .all<SelectQuestionsJson>();
+    .all<SqlJsonRecord>();
   return JSON.parse(result.results[0].record);
 };
 
-type SelectQuestionOptionsJson = { record: string };
-type SelectQuestionOptions = Record<string, {
-  id: number;
-  question_id: number;
-  number: number;
-  text_value: string;
-  img_url: string | null;
-}>;
+type SelectQuestionOptions = z_infer<typeof schema.QuestionOption>;
 
 const DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE = `
 WITH survey_questions_options AS (
@@ -80,17 +75,18 @@ export const selectQuestionOptions = async (
   env: Cloudflare.Env,
   survey_id: number,
 ): Promise<SelectQuestionOptions> => {
-  const db = env.MAIN_DB;
-  const result = await db.prepare(DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE).bind(survey_id).all<
-    SelectQuestionOptionsJson
-  >();
+  const db = getQuestionsDB(env);
+  const result = await db
+    .prepare(DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE)
+    .bind(survey_id)
+    .all<SqlJsonRecord>();
   return JSON.parse(result.results[0].record) as SelectQuestionOptions;
 };
 
 const DATABASE_INSERT_SUBMITTED = `INSERT INTO submitted (date) VALUES (?)`;
 
 export const insertSubmitted = async (env: Cloudflare.Env, date: string): Promise<number> => {
-  const db = env.MAIN_DB;
+  const db = getQuestionsDB(env);
   const result = await db.prepare(DATABASE_INSERT_SUBMITTED).bind(date).run();
   return result.meta.last_row_id;
 };
@@ -107,7 +103,7 @@ export const insertSubmittedAnswers = async (
   submitted_id: number,
   answers: z_infer<typeof schema.SubmitRequest>["answers"],
 ): Promise<void> => {
-  const db = env.MAIN_DB;
+  const db = getQuestionsDB(env);
   const stmt_template = db.prepare(DATABASE_INSERT_SUBMITTED_ANSWER);
   const stmts = [];
   for (const answer of answers) {

@@ -1,3 +1,7 @@
+//! Schema for the application
+//!
+//! Used by the worker and the client
+
 import {
   array,
   boolean,

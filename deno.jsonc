@@ -3,19 +3,19 @@
     "build": {
       "command": "deno -REWS --allow-run --allow-ffi npm:vite build",
       "files": ["src/**/*.ts", "src/**/*.tsx", "deno.jsonc"],
-      "output": ["dist/"],
+      "output": ["dist/"]
     },
 
     "preview": {
       "command": "deno -REWSN --allow-run --allow-ffi npm:vite preview",
-      "dependencies": ["build"],
+      "dependencies": ["build"]
     },
 
     "dev:worker": {
       "command": "deno -RE --allow-run npm:wrangler dev",
-      "dependencies": ["build"],
+      "dependencies": ["build"]
     },
-    "dev:frontend": "deno -REWSN --allow-run --allow-ffi npm:vite dev", // -REWS --allow-run --allow-ffi 
+    "dev:frontend": "deno -REWSN --allow-run --allow-ffi npm:vite dev",
     "dev": {
       "dependencies": ["dev:worker", "dev:frontend"]
     },
@@ -23,7 +23,7 @@
     // Backend mantainance tasks
     "deploy": {
       "command": "deno --allow-env --allow-run npm:wrangler deploy",
-      "dependencies": ["build"],
+      "dependencies": ["build"]
     },
     "cf-typegen": "deno -E --allow-run npm:wrangler types",
     "migrations": "deno -E --allow-run npm:wrangler d1 migrations apply MAIN_DB",
@@ -32,7 +32,7 @@
     // Codebase mantainance tasks
     "lint": "deno lint",
     "fmt": "deno fmt",
-    "clean": "rm -rf ./dist ./.wrangler",
+    "clean": "rm -rf ./dist ./.wrangler"
   },
 
   "imports": {
@@ -69,6 +69,6 @@
     "indentWidth": 2,
     "semiColons": true,
     "singleQuote": false,
-    "include": ["src/"],
+    "include": ["src/"]
   }
 }
