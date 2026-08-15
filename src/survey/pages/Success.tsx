@@ -27,7 +27,7 @@ const Success = () => {
         </p>
 
         <p class="success-message">
-          Tu respuesta ha sido enviada exitosamente al servidor. Apreciamos mucho tu participación y valiosa contribución.
+          Apreciamos mucho tu participación y valiosa contribución.
         </p>
 
         {/* Footer Text */}
