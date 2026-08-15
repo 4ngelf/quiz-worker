@@ -51,8 +51,8 @@
     "globals": "npm:globals@^17.0.0",
     "vite": "npm:vite@^6.0.0",
     "vite-plugin-solid": "npm:vite-plugin-solid@2.11.12",
-    "wrangler": "npm:wrangler@4.111.0",
-  }
+    "wrangler": "npm:wrangler@4.111.0"
+  },
   "minimumDependencyAge": {
     "age": "P7D"
   },
