@@ -13,7 +13,7 @@ import {
 } from "solid-js";
 import type { Setter } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useParams } from "@solidjs/router";
+import { useNavigate, useParams } from "@solidjs/router";
 import { hc } from "hono/client";
 import type { infer as z_infer } from "zod/mini";
 
@@ -22,7 +22,7 @@ import * as schema from "@worker/schema.ts";
 
 //# Assets
 
-import "./App.css";
+import "./Survey.css";
 
 //# API Layer
 
@@ -132,6 +132,8 @@ type Status =
 const App = () => {
   //### Constants
 
+  const navigate = useNavigate();
+
   const params = useParams();
   const survey_id = params.survey_id!;
 
@@ -184,7 +186,7 @@ const App = () => {
     }
     if (failed) throw new Error("Falla al subir tus respuestas.");
 
-    setStatus({ status: "submitted" });
+    navigate("/survey/success");
   };
 
   const [getQuestionsData] = createResource(() => survey_id, fetchQuestions);

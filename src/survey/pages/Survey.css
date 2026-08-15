@@ -95,7 +95,7 @@
 }
 
 .question-body::before {
-  content: "ℹ️ " ;
+  content: "ℹ️ ";
   font-size: 1.15rem;
 }
 
@@ -134,7 +134,7 @@
 .option-button.selected {
   /* border-color: #8bd3ff; */
   outline: 3px solid #8bd3ff;
-  outline-offset: 2px; 
+  outline-offset: 2px;
   background: rgba(139, 211, 255, 0.2);
 }
 
