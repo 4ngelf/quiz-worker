@@ -228,10 +228,11 @@ const App = () => {
       <DisplayStatusBlock status={getStatus()} />
       <Suspense fallback={<LoadingQuestionsBlock />}>
         <Show when={getQuestionsData.state === "ready"}>
+
           <section class="hero-card">
-            <h1>{getQuestionsData()!.description}</h1>
+            <h1>{getQuestionsData()!.name}</h1>
             <Show when={getQuestionsData()!.description}>
-              <p class="eyebrow">{getQuestionsData()!.name}</p>
+              <p class="eyebrow">{getQuestionsData()!.description}</p>
             </Show>
           </section>
 
@@ -242,6 +243,7 @@ const App = () => {
           />
 
           <SubmitButtonBlock onClick={onSubmitSendAnswers} disabled={isSubmitting()} />
+
         </Show>
       </Suspense>
     </main>
