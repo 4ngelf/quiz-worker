@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS questions_options (
   number INTEGER NOT NULL UNIQUE,
   text_value VARCHAR NOT NULL,
   img_url VARCHAR,
+  is_alternative BOOLEAN NOT NULL DEFAULT 0,
   FOREIGN KEY (question_id) REFERENCES questions(id)
     ON UPDATE CASCADE ON DELETE CASCADE
 );

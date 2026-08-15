@@ -64,6 +64,9 @@ export const selectQuestions = async (
     .prepare(DATABASE_SELECT_QUESTIONS)
     .bind(survey_id)
     .all<SqlJsonRecord>();
+  if (!result.results[0] || !result.results[0].record) {
+    return {};
+  }
   return JSON.parse(result.results[0].record);
 };
 
@@ -76,7 +79,8 @@ WITH survey_questions_options AS (
     qo.question_id,
     qo.number,
     qo.text_value,
-    qo.img_url
+    qo.img_url,
+    qo.is_alternative
   FROM questions_options qo
   INNER JOIN questions q ON qo.question_id = q.id
   WHERE q.survey_id = ?
@@ -87,7 +91,8 @@ SELECT json_group_object(
     'id', id,
     'question_id', question_id, 
     'number', number, 
-    'text_value', text_value, 
+    'text_value', text_value,
+    'is_alternative', is_alternative,
     'img_url', img_url
   )
 ) AS record
@@ -102,6 +107,9 @@ export const selectQuestionOptions = async (
     .prepare(DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE)
     .bind(survey_id)
     .all<SqlJsonRecord>();
+  if (!result.results[0] || !result.results[0].record) {
+    return {};
+  }
   return JSON.parse(result.results[0].record);
 };
 

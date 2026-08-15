@@ -12,14 +12,15 @@ INSERT INTO questions (id, survey_id, type, question, body_text, img_url) VALUES
 (4, 2, 0, 'How really satisfied are you tools?', NULL, NULL);
 
 -- Seed data for question options
-INSERT INTO questions_options (id, question_id, number, text_value, img_url) VALUES 
-(1, 1, 101, 'Very Satisfied', NULL),
-(2, 1, 102, 'Neutral', NULL),
-(3, 1, 103, 'Dissatisfied', NULL),
-(4, 2, 201, 'Yes', NULL),
-(5, 2, 202, 'No', NULL),
-(6, 3, 301, 'Extremely Satisfied', NULL),
-(7, 3, 302, 'Extremely Disatisfied', NULL);
+INSERT INTO questions_options (id, question_id, number, text_value, is_alternative, img_url) VALUES 
+(1, 1, 101, 'Very Satisfied', FALSE, NULL),
+(2, 1, 102, 'Neutral', FALSE, NULL),
+(3, 1, 103, 'Dissatisfied', FALSE, NULL),
+(4, 2, 201, 'Yes', FALSE, NULL),
+(5, 2, 202, 'No', FALSE, NULL),
+(6, 3, 301, 'Extremely Satisfied', FALSE, NULL),
+(7, 3, 302, 'Extremely Disatisfied', FALSE, NULL),
+(8, 3, 303, 'Another state of mind', TRUE, NULL);
 
 -- Seed data for submitted surveys
 -- INSERT INTO submitted (id, date) VALUES 

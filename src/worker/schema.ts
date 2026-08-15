@@ -21,6 +21,18 @@ import {
 // Common types
 
 export const Index = number().check(positive());
+export const BooleanInt = number().check((ctx) => {
+  if (ctx.value !== 0 && ctx.value !== 1) {
+    ctx.issues.push({
+      code: "invalid_type",
+      expected: "0 or 1",
+      received: ctx.value,
+      message: "Expected a boolean integer (0 or 1)",
+      origin: "number",
+      input: ctx.value,
+    });
+  }
+});
 
 export const StringIndex = string().check((ctx) => {
   const index = Number(ctx.value);
@@ -62,6 +74,7 @@ export const QuestionOption = object({
   question_id: Index,
   number: Index,
   text_value: string(),
+  is_alternative: BooleanInt,
   img_url: nullable(string()),
 });
 
@@ -103,6 +116,7 @@ export const JsonAnswerForText = object({
 export const JsonAnswerForMultiple = object({
   type: literal(AnswerType.Multiple),
   question_option_id: Index,
+  optional_alternative_text: optional(string()),
 });
 
 export const JsonAnswer = xor([

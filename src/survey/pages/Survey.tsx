@@ -126,19 +126,30 @@ const App = () => {
   //### API resources
 
   const fetchQuestions = async (survey_id: string) => {
+    console.log(`Fetching questions for survey: ${survey_id}`);
     const r = await api_client.api.survey[":survey_id"].questions.$get({
       param: { survey_id: survey_id },
     });
-    if (!r.ok) throw new Error("Falla al recibir preguntas de la encuesta");
+    console.log(`Response status: ${r.status}`);
+    if (!r.ok) {
+      const error_text = await r.text();
+      console.error(`API error response:`, error_text);
+      throw new Error("Falla al recibir preguntas de la encuesta");
+    }
 
     const questions_response_json = await r.json();
+    console.log(`Parsed response:`, questions_response_json);
     const questions_response = schema.QuestionsResponse2.safeParse(questions_response_json);
     if (!questions_response.success) {
+      console.error(`Schema validation error:`, questions_response.error);
       throw new Error(
-        `Falla al procesar preguntas de la encuesta.\nError: ${questions_response.error}`,
+        `Falla al procesar preguntas de la encuesta.
+        Error: ${questions_response.error}
+        Got this response: ${JSON.stringify(questions_response_json)}`,
       );
     }
 
+    console.log(`Successfully loaded questions for survey: ${survey_id}`);
     setAnswersData(makeAnswersData(questions_response.data.questions));
 
     return questions_response.data;
@@ -245,6 +256,11 @@ const App = () => {
           <SubmitButtonBlock onClick={onSubmitSendAnswers} disabled={isSubmitting()} />
 
         </Show>
+        <Show when={getQuestionsData.state === "errored"}>
+          <div class="status error">
+            <p>Error loading survey: {getQuestionsData.error?.message}</p>
+          </div>
+        </Show>
       </Suspense>
     </main>
   );
@@ -273,10 +289,14 @@ const QuestionsBodyBlock = (props: {
 
         //### Events
 
-        const onSelectChoice = (option_id: number) => {
+        const onSelectChoice = (
+          option_id: number,
+          alternative_text?: string,
+        ) => {
           const answer: schema_type.JsonAnswerValue = {
             type: schema.AnswerType.Multiple,
             question_option_id: option_id,
+            optional_alternative_text: alternative_text,
           };
           props.onAnswer(question.id, answer);
         };
@@ -372,15 +392,31 @@ const TextAreaBlock = (props: {
 
 const MultipleChoiceBlock = (props: {
   choices: schema_type.Option[];
-  onSelectChoice: (option_id: number) => void;
+  onSelectChoice: (option_id: number, alternative_text?: string) => void;
 }) => {
   //### Signals
 
   const [getSelectedId, setSelectedId] = createSignal<number>(-1);
+  const [getAlternativeText, setAlternativeText] = createSignal<string>("");
 
   createEffect(() => {
     const sn = getSelectedId();
-    if (sn !== -1) props.onSelectChoice(sn);
+    if (sn !== -1) {
+      const selected_option = props.choices.find((o) => o.id === sn);
+      const alt_text = selected_option?.is_alternative
+        ? getAlternativeText()
+        : undefined;
+      props.onSelectChoice(sn, alt_text);
+    }
+  });
+
+  createEffect(() => {
+    const alt_text = getAlternativeText();
+    const sn = getSelectedId();
+    const selected_option = props.choices.find((o) => o.id === sn);
+    if (selected_option?.is_alternative && sn !== -1) {
+      props.onSelectChoice(sn, alt_text);
+    }
   });
 
   //### Helpers
@@ -396,13 +432,24 @@ const MultipleChoiceBlock = (props: {
     <div class="options-grid">
       <For each={props.choices}>
         {(option) => (
-          <button
-            type="button"
-            class={buttonStyle(option.id)}
-            onClick={() => setSelectedId(option.id)}
-          >
-            {option.text_value}
-          </button>
+          <div class="option-container">
+            <button
+              type="button"
+              class={buttonStyle(option.id)}
+              onClick={() => setSelectedId(option.id)}
+            >
+              {option.text_value}
+            </button>
+            <Show when={option.is_alternative && getSelectedId() === option.id}>
+              <input
+                type="text"
+                class="alternative-input"
+                placeholder="Please specify..."
+                value={getAlternativeText()}
+                onInput={(e) => setAlternativeText(e.currentTarget.value)}
+              />
+            </Show>
+          </div>
         )}
       </For>
     </div>
