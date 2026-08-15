@@ -4,12 +4,12 @@ INSERT INTO surveys (id, name, description) VALUES
 (2, 'Employee Engagement Survey', 'Annual pulse survey regarding workplace culture and satisfaction.');
 
 -- Seed data for questions
-INSERT INTO questions (id, survey_id, type, question, body_text, img_url) VALUES 
-(1, 1, 1, 'How satisfied are you with our product?', 'Please rate your overall satisfaction level.', 'https://example.com/images/q1.png'),
-(2, 1, 1, 'Would you recommend us to a friend?', 'Select yes or no.', NULL),
-(5, 1, 0, 'Explain things here', 'text time', NULL),
-(3, 2, 1, 'How satisfied are you with your remote work tools?', NULL, NULL),
-(4, 2, 0, 'How really satisfied are you tools?', NULL, NULL);
+INSERT INTO questions (id, survey_id, type, question, body_text, img_url, max_options) VALUES 
+(1, 1, 1, 'How satisfied are you with our product?', 'Please rate your overall satisfaction level.', 'https://example.com/images/q1.png', 1),
+(2, 1, 1, 'Would you recommend us to a friend?', 'Select yes or no.', NULL, 1),
+(5, 1, 0, 'Explain things here', 'text time', NULL, 1),
+(3, 2, 1, 'How satisfied are you with your remote work tools?', NULL, NULL, 2),
+(4, 2, 0, 'How really satisfied are you tools?', NULL, NULL, 1);
 
 -- Seed data for question options
 INSERT INTO questions_options (id, question_id, number, text_value, is_alternative, img_url) VALUES 

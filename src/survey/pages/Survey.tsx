@@ -250,7 +250,6 @@ const App = () => {
       <DisplayStatusBlock status={getStatus()} />
       <Suspense fallback={<LoadingQuestionsBlock />}>
         <Show when={getQuestionsData.state === "ready"}>
-
           <section class="hero-card">
             <h1>{getQuestionsData()!.name}</h1>
             <Show when={getQuestionsData()!.description}>
@@ -265,7 +264,6 @@ const App = () => {
           />
 
           <SubmitButtonBlock onClick={onSubmitSendAnswers} disabled={isSubmitting()} />
-
         </Show>
         <Show when={getQuestionsData.state === "errored"}>
           <div class="status error">
@@ -290,7 +288,7 @@ const QuestionsBodyBlock = (props: {
         const questionTypeText = () => {
           switch (question.type) {
             case schema.AnswerType.Multiple:
-              return (question.max_options ?? 1) > 1 ? "Múltiple selección" : "Opcion multiple";
+              return (question.max_options ?? 1) > 1 ? "Selección múltiple " : "Opcion";
             case schema.AnswerType.Text:
               return "Texto libre";
             default:
@@ -344,13 +342,19 @@ const QuestionsBodyBlock = (props: {
               <p class="question-body">{question.body_text}</p>
             </Show>
             <Switch>
-              <Match when={question.type === schema.AnswerType.Multiple && (question.max_options ?? 1) === 1}>
+              <Match
+                when={question.type === schema.AnswerType.Multiple &&
+                  (question.max_options ?? 1) === 1}
+              >
                 <MultipleChoiceBlock
                   choices={(question as processed.QuestionWithOptions).options}
                   onSelectChoice={onSelectChoice}
                 />
               </Match>
-              <Match when={question.type === schema.AnswerType.Multiple && (question.max_options ?? 1) > 1}>
+              <Match
+                when={question.type === schema.AnswerType.Multiple &&
+                  (question.max_options ?? 1) > 1}
+              >
                 <MultiSelectBlock
                   choices={(question as processed.QuestionWithOptions).options}
                   max_options={question.max_options ?? 2}
@@ -429,9 +433,7 @@ const MultipleChoiceBlock = (props: {
     const sn = getSelectedId();
     if (sn !== -1) {
       const selected_option = props.choices.find((o) => o.id === sn);
-      const alt_text = selected_option?.is_alternative
-        ? getAlternativeText()
-        : undefined;
+      const alt_text = selected_option?.is_alternative ? getAlternativeText() : undefined;
       props.onSelectChoice(sn, alt_text);
     }
   });
