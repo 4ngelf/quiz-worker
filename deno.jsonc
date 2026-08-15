@@ -11,14 +11,8 @@
       "dependencies": ["build"]
     },
 
-    "dev:worker": {
-      "command": "deno -RE --allow-run npm:wrangler dev",
-      "dependencies": ["build"]
-    },
-    "dev:frontend": "deno -REWSN --allow-run --allow-ffi npm:vite dev",
-    "dev": {
-      "dependencies": ["dev:worker", "dev:frontend"]
-    },
+    // NOTE: go to http://localhost:3000/cdn-cgi/explorer
+    "dev": "deno -REWSN --allow-run --allow-ffi npm:vite dev",
 
     // Backend mantainance tasks
     "deploy": {
@@ -27,8 +21,7 @@
     },
     "cf-typegen": "deno -E --allow-run npm:wrangler types",
     "migrations": "deno -E --allow-run npm:wrangler d1 migrations apply MAIN_DB",
-    "migrations:local": "deno -E --allow-run npm:wrangler d1 migrations apply MAIN_DB --local",
-    "seed:local": "deno -E --allow-run npm:wrangler d1 execute MAIN_DB --file=survey_seed.sql",
+    "seed": "deno -E --allow-run npm:wrangler d1 execute MAIN_DB --file=survey_seed.sql",
 
     // Codebase mantainance tasks
     "lint": "deno lint",

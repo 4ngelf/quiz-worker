@@ -280,9 +280,9 @@ const QuestionsBodyBlock = (props: {
         const questionTypeText = () => {
           switch (question.type) {
             case schema.AnswerType.Multiple:
-              return "Multiple choice";
+              return "Opcion multiple";
             case schema.AnswerType.Text:
-              return "Text response";
+              return "Texto libre";
             default:
               throw new Error("Programming error: question type not handled");
           }
@@ -312,14 +312,14 @@ const QuestionsBodyBlock = (props: {
         return (
           <article class="question-card">
             <div class="question-header">
-              <p class="question-type">{questionTypeText()}</p>
               <h2>{question.question}</h2>
+              <span class="question-type">{questionTypeText()}</span>
             </div>
+            <Show when={question.img_url}>
+              <img class="question-image" src={question.img_url!} />
+            </Show>
             <Show when={question.body_text}>
               <p class="question-body">{question.body_text}</p>
-            </Show>
-            <Show when={question.img_url}>
-              <img class="question-image" src={question.img_url!} alt={question.question} />
             </Show>
             <Switch>
               <Match when={question.type === schema.AnswerType.Multiple}>

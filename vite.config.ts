@@ -14,16 +14,5 @@ export default defineConfig({
       "@worker": pathAlias("./src/worker"),
     },
   },
-  server: {
-    port: 3000,
-
-    // For use with `vite dev`
-    proxy: {
-      "/api": {
-        target: "http://localhost:8787",
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
+  server: { port: 3000 },
 });

@@ -20,6 +20,7 @@ body {
   min-height: 100vh;
 }
 
+
 #root {
   min-height: 100vh;
 }
@@ -33,14 +34,15 @@ button {
   font-family: inherit;
   background-color: #111827;
   cursor: pointer;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.4s ease, outline-offset 0.3s ease-out;
 }
-button:hover {
-  border-color: #8bd3ff;
-  transform: translateY(-1px);
-}
-button:focus,
-button:focus-visible {
-  outline: 2px solid #8bd3ff;
-  outline-offset: 2px;
-}
+
+/* button:hover { */
+/*   border-color: #8bd3ff; */
+/*   transform: translateY(-1px); */
+/* } */
+/* button:focus, */
+/* button:focus-visible { */
+/*   outline: 2px solid #8bd3ff; */
+/*   outline-offset: 2px; */
+/* } */
