@@ -46,8 +46,7 @@
     // Development dependencies
     "@cloudflare/vite-plugin": "npm:@cloudflare/vite-plugin@1.45.0",
     "@std/path": "jsr:@std/path@^1.1.1",
-    // "esbuild": "npm:esbuild",
-    // "@deno/esbuild-plugin": "jsr:@deno/esbuild-plugin@^1.2.1",
+    "std/yaml": "https://deno.land/std@0.208.0/yaml/mod.ts",
     "globals": "npm:globals@^17.0.0",
     "vite": "npm:vite@^6.0.0",
     "vite-plugin-solid": "npm:vite-plugin-solid@2.11.12",
