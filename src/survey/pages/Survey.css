@@ -13,12 +13,21 @@
   margin-bottom: 1.5rem;
 }
 
+.hero-card h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+}
+
 .eyebrow {
-  margin: 0 0 0.35rem;
-  text-transform: uppercase;
-  letter-spacing: 0.24em;
-  font-size: 0.8rem;
-  color: #8bd3ff;
+  margin: 0 0 1rem 0;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 1rem;
+  font-weight: normal;
+  color: #dfe2ee;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
 }
 
 .subtitle {
@@ -82,7 +91,6 @@
   margin-top: 10px;
   white-space: nowrap;
   flex-shrink: 0;
-  flex-shrinking: 0;
 }
 
 .question-body {

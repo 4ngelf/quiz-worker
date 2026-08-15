@@ -9,6 +9,7 @@ import {
   nullable,
   number,
   object,
+  optional,
   pipe,
   positive,
   record,
@@ -67,6 +68,21 @@ export const QuestionOption = object({
 export const QuestionsResponse = object({
   questions: record(StringIndex, Question),
   options: record(StringIndex, QuestionOption),
+});
+
+export const Question2 = object({
+  id: Index,
+  type: number(),
+  question: string(),
+  body_text: nullable(string()),
+  img_url: nullable(string()),
+  options: optional(array(QuestionOption)),
+});
+
+export const QuestionsResponse2 = object({
+  name: string(),
+  description: nullable(string()),
+  questions: record(StringIndex, Question2),
 });
 
 //- POST /api/submit

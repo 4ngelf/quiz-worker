@@ -34,7 +34,9 @@ const api_client = hc<API>("/");
 // deno-lint-ignore no-namespace
 namespace schema_type {
   export type QuestionId = string;
-  export type QuestionsResponse = z_infer<typeof schema.QuestionsResponse>;
+  export type QuestionsResponseFull = z_infer<typeof schema.QuestionsResponse2>;
+  export type Question2 = z_infer<typeof schema.Question2>;
+  export type Option = z_infer<typeof schema.QuestionOption>;
   export type SubmitRequest = z_infer<typeof schema.SubmitRequest>;
   export type JsonAnswerValue = z_infer<typeof schema.JsonAnswer>;
   export type SuccessResponse = z_infer<typeof schema.SuccessResponse>;
@@ -47,35 +49,11 @@ namespace schema_type {
 // Internal representation for responseQuestions
 // deno-lint-ignore no-namespace
 namespace processed {
-  export type Questions = Record<string, processed.Question | processed.QuestionWithOptions>;
+  export type Questions = Record<string, schema_type.Question2>;
 
-  export type Question = schema_type.QuestionsResponse["questions"][string];
-  export type Option = schema_type.QuestionsResponse["options"][string];
-  export type QuestionWithOptions = processed.Question & { options: processed.Option[] };
+  export type Question = schema_type.Question2;
+  export type QuestionWithOptions = Question & { options: NonNullable<Question["options"]> };
 }
-
-const processQuestionsResponse = (qr: schema_type.QuestionsResponse): processed.Questions => {
-  const questions: processed.Questions = {};
-  for (const [question_id, question] of Object.entries(qr.questions)) {
-    if (question.type === schema.AnswerType.Multiple) {
-      questions[question_id] = { ...question, options: [] };
-    } else {
-      questions[question_id] = { ...question };
-    }
-  }
-  const sort_list: Set<string> = new Set();
-  for (const option of Object.values(qr.options)) {
-    const option_question_id = option.question_id.toString(10);
-    const question = questions[option_question_id] as processed.QuestionWithOptions;
-    sort_list.add(option_question_id);
-    question.options.push(option);
-  }
-  for (const option_question_id of sort_list) {
-    const question = questions[option_question_id] as processed.QuestionWithOptions;
-    question.options.sort((a, b) => a.number - b.number);
-  }
-  return questions;
-};
 
 type AnswersData = Record<schema_type.QuestionId, schema_type.JsonAnswerValue>;
 
@@ -154,18 +132,16 @@ const App = () => {
     if (!r.ok) throw new Error("Falla al recibir preguntas de la encuesta");
 
     const questions_response_json = await r.json();
-    const questions = schema.QuestionsResponse.safeParse(questions_response_json);
-    if (!questions.success) {
+    const questions_response = schema.QuestionsResponse2.safeParse(questions_response_json);
+    if (!questions_response.success) {
       throw new Error(
-        `Falla al procesar preguntas de la encuesta.\nError: ${questions.error}`,
+        `Falla al procesar preguntas de la encuesta.\nError: ${questions_response.error}`,
       );
     }
 
-    const processed_questions = processQuestionsResponse(questions.data);
+    setAnswersData(makeAnswersData(questions_response.data.questions));
 
-    setAnswersData(makeAnswersData(processed_questions));
-
-    return processed_questions;
+    return questions_response.data;
   };
 
   const fetchSubmit = async (submit_payload: schema_type.SubmitRequest | null) => {
@@ -249,33 +225,36 @@ const App = () => {
 
   return (
     <main class="app-shell">
-      <section class="hero-card">
-        <p class="eyebrow">Anonymous survey response</p>
-        <h1>Share your feedback</h1>
-      </section>
-
       <DisplayStatusBlock status={getStatus()} />
       <Suspense fallback={<LoadingQuestionsBlock />}>
         <Show when={getQuestionsData.state === "ready"}>
+          <section class="hero-card">
+            <h1>{getQuestionsData()!.description}</h1>
+            <Show when={getQuestionsData()!.description}>
+              <p class="eyebrow">{getQuestionsData()!.name}</p>
+            </Show>
+          </section>
+
           <QuestionsBodyBlock
-            questions_data={getQuestionsData()!}
+            questions={getQuestionsData()!.questions}
             setStatus={setStatus}
             onAnswer={onAnswerSetAnswersData}
           />
+
+          <SubmitButtonBlock onClick={onSubmitSendAnswers} disabled={isSubmitting()} />
         </Show>
-        <SubmitButtonBlock onClick={onSubmitSendAnswers} disabled={isSubmitting()} />
       </Suspense>
     </main>
   );
 };
 
 const QuestionsBodyBlock = (props: {
-  questions_data: processed.Questions;
+  questions: processed.Questions;
   setStatus: Setter<Status | null>;
   onAnswer: (question_id: number, answer_value: schema_type.JsonAnswerValue) => void;
 }) => (
   <div>
-    <For each={Object.values(props.questions_data)}>
+    <For each={Object.values(props.questions)}>
       {(question) => {
         //### Helpers
 
@@ -390,7 +369,7 @@ const TextAreaBlock = (props: {
 );
 
 const MultipleChoiceBlock = (props: {
-  choices: processed.Option[];
+  choices: schema_type.Option[];
   onSelectChoice: (option_id: number) => void;
 }) => {
   //### Signals

@@ -13,7 +13,29 @@ const getQuestionsDB = (env: Cloudflare.Env): D1Database => env.MAIN_DB;
 
 // Database manipulation
 
-export type SelectQuestions = z_infer<typeof schema.Question>;
+export type SurveyInfo = {
+  name: string;
+  description: string | null;
+};
+
+const DATABASE_SELECT_SURVEY_INFO = `
+SELECT name, description
+FROM surveys
+WHERE id = ?`;
+
+export const selectSurveyInfo = async (
+  env: Cloudflare.Env,
+  survey_id: number,
+): Promise<SurveyInfo | null> => {
+  const db = getQuestionsDB(env);
+  const result = await db
+    .prepare(DATABASE_SELECT_SURVEY_INFO)
+    .bind(survey_id)
+    .first<SurveyInfo>();
+  return result;
+};
+
+export type SelectQuestions = Record<string, z_infer<typeof schema.Question>>;
 
 const DATABASE_SELECT_QUESTIONS = `
 WITH survey_questions AS (
@@ -45,7 +67,7 @@ export const selectQuestions = async (
   return JSON.parse(result.results[0].record);
 };
 
-type SelectQuestionOptions = z_infer<typeof schema.QuestionOption>;
+export type SelectQuestionOptions = Record<string, z_infer<typeof schema.QuestionOption>>;
 
 const DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE = `
 WITH survey_questions_options AS (
@@ -80,7 +102,7 @@ export const selectQuestionOptions = async (
     .prepare(DATABASE_SELECT_QUESTION_OPTIONS_MULTIPLE)
     .bind(survey_id)
     .all<SqlJsonRecord>();
-  return JSON.parse(result.results[0].record) as SelectQuestionOptions;
+  return JSON.parse(result.results[0].record);
 };
 
 const DATABASE_INSERT_SUBMITTED = `INSERT INTO submitted (date) VALUES (?)`;

@@ -11,7 +11,8 @@ const Home = () => {
             Bienvenido al Sistema de Encuestas
           </h2>
           <p class="home-hero-subtitle">
-            Tu opinión es importante para nosotros. Participa en nuestras encuestas y ayúdanos a mejorar.
+            Tu opinión es importante para nosotros. Participa en nuestras encuestas y ayúdanos a
+            mejorar.
           </p>
         </div>
 
