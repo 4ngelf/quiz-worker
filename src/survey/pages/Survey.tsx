@@ -71,10 +71,17 @@ const makeAnswersData = (pqr: processed.Questions): AnswersData => {
         };
         break;
       case schema.AnswerType.Multiple:
-        answer = {
-          type: schema.AnswerType.Multiple,
-          question_option_id: -1,
-        };
+        if ((question.max_options ?? 1) > 1) {
+          answer = {
+            type: schema.AnswerType.Multiple,
+            question_option_ids: [],
+          };
+        } else {
+          answer = {
+            type: schema.AnswerType.Multiple,
+            question_option_id: -1,
+          };
+        }
         break;
       default:
         throw Error(`Invalid type for question with id = ${question_id}`);
@@ -193,7 +200,11 @@ const App = () => {
           if (answer.text === "") return false;
           break;
         case schema.AnswerType.Multiple:
-          if (answer.question_option_id === -1) return false;
+          if ("question_option_id" in answer) {
+            if (answer.question_option_id === -1) return false;
+          } else if ("question_option_ids" in answer) {
+            if (answer.question_option_ids.length === 0) return false;
+          }
           break;
         default:
           throw new Error("Programming error: Answer type not handled");
@@ -279,7 +290,7 @@ const QuestionsBodyBlock = (props: {
         const questionTypeText = () => {
           switch (question.type) {
             case schema.AnswerType.Multiple:
-              return "Opcion multiple";
+              return (question.max_options ?? 1) > 1 ? "Múltiple selección" : "Opcion multiple";
             case schema.AnswerType.Text:
               return "Texto libre";
             default:
@@ -297,6 +308,14 @@ const QuestionsBodyBlock = (props: {
             type: schema.AnswerType.Multiple,
             question_option_id: option_id,
             optional_alternative_text: alternative_text,
+          };
+          props.onAnswer(question.id, answer);
+        };
+
+        const onMultiSelectChoice = (option_ids: number[]) => {
+          const answer: schema_type.JsonAnswerValue = {
+            type: schema.AnswerType.Multiple,
+            question_option_ids: option_ids,
           };
           props.onAnswer(question.id, answer);
         };
@@ -325,10 +344,17 @@ const QuestionsBodyBlock = (props: {
               <p class="question-body">{question.body_text}</p>
             </Show>
             <Switch>
-              <Match when={question.type === schema.AnswerType.Multiple}>
+              <Match when={question.type === schema.AnswerType.Multiple && (question.max_options ?? 1) === 1}>
                 <MultipleChoiceBlock
                   choices={(question as processed.QuestionWithOptions).options}
                   onSelectChoice={onSelectChoice}
+                />
+              </Match>
+              <Match when={question.type === schema.AnswerType.Multiple && (question.max_options ?? 1) > 1}>
+                <MultiSelectBlock
+                  choices={(question as processed.QuestionWithOptions).options}
+                  max_options={question.max_options ?? 2}
+                  onMultiSelectChoice={onMultiSelectChoice}
                 />
               </Match>
               <Match when={question.type === schema.AnswerType.Text}>
@@ -449,6 +475,72 @@ const MultipleChoiceBlock = (props: {
                 onInput={(e) => setAlternativeText(e.currentTarget.value)}
               />
             </Show>
+          </div>
+        )}
+      </For>
+    </div>
+  );
+};
+
+const MultiSelectBlock = (props: {
+  choices: schema_type.Option[];
+  max_options: number;
+  onMultiSelectChoice: (option_ids: number[]) => void;
+}) => {
+  //### Signals
+
+  const [getSelectedIds, setSelectedIds] = createSignal<number[]>([]);
+
+  createEffect(() => {
+    const ids = getSelectedIds();
+    props.onMultiSelectChoice(ids);
+  });
+
+  //### Helpers
+
+  const toggleOption = (option_id: number) => {
+    const current = getSelectedIds();
+    if (current.includes(option_id)) {
+      setSelectedIds(current.filter((id) => id !== option_id));
+    } else {
+      if (current.length < props.max_options) {
+        setSelectedIds([...current, option_id]);
+      }
+    }
+  };
+
+  const isSelected = (option_id: number) => {
+    return getSelectedIds().includes(option_id);
+  };
+
+  const isDisabled = (option_id: number) => {
+    return !isSelected(option_id) && getSelectedIds().length >= props.max_options;
+  };
+
+  const checkboxStyle = (option_id: number) => {
+    if (isDisabled(option_id)) return "checkbox-button disabled";
+    if (isSelected(option_id)) return "checkbox-button selected";
+    return "checkbox-button";
+  };
+
+  //### Render
+
+  return (
+    <div class="options-grid">
+      <For each={props.choices}>
+        {(option) => (
+          <div class="option-container">
+            <button
+              type="button"
+              class={checkboxStyle(option.id)}
+              onClick={() => !isDisabled(option.id) && toggleOption(option.id)}
+              disabled={isDisabled(option.id)}
+            >
+              <span class="checkbox-indicator">
+                {isSelected(option.id) ? "☑" : "☐"}
+              </span>
+              {option.text_value}
+            </button>
           </div>
         )}
       </For>

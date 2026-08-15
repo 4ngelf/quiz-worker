@@ -50,7 +50,8 @@ SELECT json_group_object(
     'type', type, 
     'question', question, 
     'body_text', body_text, 
-    'img_url', img_url 
+    'img_url', img_url,
+    'max_options', max_options
   )
 ) AS record
 FROM survey_questions`;

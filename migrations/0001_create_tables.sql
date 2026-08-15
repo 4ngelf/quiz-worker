@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS questions (
   question VARCHAR NOT NULL,
   body_text TEXT,
   img_url VARCHAR,
+  max_options INTEGER NOT NULL DEFAULT 1,
   FOREIGN KEY (survey_id) REFERENCES surveys(id)
     ON UPDATE CASCADE ON DELETE CASCADE
 );

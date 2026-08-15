@@ -89,6 +89,7 @@ export const Question2 = object({
   question: string(),
   body_text: nullable(string()),
   img_url: nullable(string()),
+  max_options: optional(number().check(positive())),
   options: optional(array(QuestionOption)),
 });
 
@@ -119,9 +120,16 @@ export const JsonAnswerForMultiple = object({
   optional_alternative_text: optional(string()),
 });
 
+export const JsonAnswerForMultipleSelections = object({
+  type: literal(AnswerType.Multiple),
+  question_option_ids: array(Index),
+  optional_alternative_text: optional(string()),
+});
+
 export const JsonAnswer = xor([
   JsonAnswerForText,
   JsonAnswerForMultiple,
+  JsonAnswerForMultipleSelections,
 ]);
 
 export const JsonAnswerFromString = pipe(

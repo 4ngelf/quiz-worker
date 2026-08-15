@@ -146,6 +146,36 @@
   background: rgba(139, 211, 255, 0.2);
 }
 
+.checkbox-button {
+  background: #111827;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: inherit;
+  text-align: left;
+  padding: 0.9rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.checkbox-button.selected {
+  outline: 3px solid #8bd3ff;
+  outline-offset: 2px;
+  background: rgba(139, 211, 255, 0.2);
+}
+
+.checkbox-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.checkbox-indicator {
+  font-size: 1.2em;
+  flex-shrink: 0;
+}
+
 .option-container {
   display: flex;
   flex-direction: column;
