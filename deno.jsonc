@@ -2,7 +2,7 @@
   "tasks": {
     "build": {
       "command": "deno -REWS --allow-run --allow-ffi npm:vite build",
-      "files": ["src/**/*.ts", "src/**/*.tsx", "deno.jsonc"],
+      "files": ["src/*", "public/*", "deno.jsonc"],
       "output": ["dist/"]
     },
 

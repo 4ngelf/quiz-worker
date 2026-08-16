@@ -1,0 +1,191 @@
+name: ESTUDIO DE MERCADO SOBRE MATERIAL MÉDICO QUIRÚRGICO
+description: |
+  Encuesta dirigida a responsables de compras de instituciones de salud
+
+  Objetivo: Conocer necesidades, criterios de selección, oportunidades de mejora y condiciones actuales de adquisición de material médico quirúrgico en instituciones de salud públicas y privadas.
+
+  Estimado(a):
+
+  Estamos realizando un estudio de mercado con el propósito de conocer las necesidades y criterios utilizados en la adquisición de material médico quirúrgico, así como identificar oportunidades de mejora en el suministro de estos productos.
+
+  La información suministrada será utilizada únicamente con fines de investigación de mercado y será manejada de forma confidencial.
+
+  Tiempo estimado de respuesta: 5 minutos.
+
+  Agradecemos su valiosa colaboración.
+
+questions:
+  - type: multiple
+    question: ¿Qué tipo de institución representa?
+    body_text: null
+    img_url: null
+    max_options: 1
+    options:
+      - text_value: Clínica privada
+      - text_value: Hospital público
+      - text_value: Centro ambulatorio
+      - text_value: Distribuidor de insumos médicos
+      - text_value: Otro
+        is_alternative: true
+
+  - type: multiple
+    question: ¿Cuáles categorías de material médico quirúrgico adquiere con mayor frecuencia?
+    body_text: Puede seleccionar varias opciones
+    img_url: null
+    max_options: 9
+    options:
+      - text_value: Apósitos y material para curación
+      - text_value: Gasas y compresas
+      - text_value: Jeringas y agujas
+      - text_value: Catéteres intravenosos (Yelcos)
+      - text_value: Guantes
+      - text_value: Kits quirúrgicos
+      - text_value: Suturas
+      - text_value: Otros
+        is_alternative: true
+
+  - type: text
+    question: Mencione los cinco (5) productos médicos descartables de mayor rotación en su institución.
+    body_text: null
+    img_url: null
+
+  - type: multiple
+    question: Al seleccionar un proveedor de material médico quirúrgico, ¿cuáles son los tres factores más importantes para su institución?
+    body_text: Seleccione máximo 3 opciones.
+    img_url: null
+    max_options: 3
+    options:
+      - text_value: Precio
+      - text_value: Calidad del producto
+      - text_value: Disponibilidad constante
+      - text_value: Tiempo de entrega
+      - text_value: Marca reconocida
+      - text_value: Registro sanitario y certificaciones
+      - text_value: Servicio postventa
+      - text_value: Respaldo técnico o asesoría
+
+  - type: multiple
+    question: ¿Cuáles son las principales dificultades que encuentra actualmente para adquirir estos productos?
+    body_text: Puede seleccionar varias opciones.
+    img_url: null
+    max_options: 7
+    options:
+      - text_value: Precios elevados
+      - text_value: Falta de disponibilidad
+      - text_value: Variación en la calidad del producto
+      - text_value: Retrasos en la entrega
+      - text_value: Poca variedad de proveedores
+      - text_value: Cambios frecuentes de precios
+      - text_value: Otro
+        is_alternative: true
+
+  - type: multiple
+    question: ¿Qué nivel de importancia tiene para usted la calidad del material médico quirúrgico adquirido?
+    body_text: null
+    img_url: null
+    max_options: 1
+    options:
+      - text_value: Muy importante
+      - text_value: Importante
+      - text_value: Poco importante
+      - text_value: La decisión se basa principalmente en el precio
+
+  - type: multiple
+    question: ¿Estaría dispuesto(a) a cambiar de proveedor si recibe un producto de igual o mejor calidad a un precio competitivo?
+    body_text: null
+    img_url: null
+    max_options: 1
+    options:
+      - text_value: Sí
+      - text_value: No
+      - text_value: Depende de la confianza y respaldo del nuevo proveedor
+
+  - type: multiple
+    question: ¿Qué nivel de ahorro consideraría atractivo para evaluar un cambio de proveedor?
+    body_text: null
+    img_url: null
+    max_options: 1
+    options:
+      - text_value: Entre 5% y 10%
+      - text_value: Entre 10% y 20%
+      - text_value: Más del 20%
+      - text_value: No cambiaría únicamente por precio
+
+  - type: multiple
+    question: ¿Qué opción le generaría mayor confianza al adquirir material médico quirúrgico?
+    body_text: null
+    img_url: null
+    max_options: 1
+    options:
+      - text_value: Una marca reconocida internacionalmente
+      - text_value: Una nueva marca con certificaciones, respaldo técnico y precio competitivo
+      - text_value: Ambas opciones me generan la misma confianza
+
+  - type: text
+    question: ¿Qué recomendación haría para mejorar el suministro de material médico quirúrgico en su institución?
+    body_text: null
+    img_url: null
+
+  - type: multiple
+    question: ¿Cuáles son las condiciones de pago que habitualmente maneja su institución con sus proveedores?
+    body_text: null
+    img_url: null
+    max_options: 1
+    options:
+      - text_value: Pago de contado
+      - text_value: Crédito a 15 días
+      - text_value: Crédito a 30 días
+      - text_value: Crédito a 45 días
+      - text_value: Crédito a 60 días o más
+      - text_value: Depende del proveedor
+      - text_value: Otro
+        is_alternative: true
+
+  - type: multiple
+    question: ¿Qué condiciones de pago consideraría más atractivas al evaluar un nuevo proveedor?
+    body_text: null
+    img_url: null
+    max_options: 1
+    options:
+      - text_value: Pago de contado con descuento
+      - text_value: Crédito a 15 días
+      - text_value: Crédito a 30 días
+      - text_value: Crédito a 45 días
+      - text_value: Crédito a 60 días o más
+      - text_value: Depende del tipo de producto
+      - text_value: Otro
+        is_alternative: true
+
+  - type: text
+    question: ¿Qué marcas de material médico quirúrgico utiliza actualmente y cuáles considera más confiables?
+    body_text: null
+    img_url: null
+
+  - type: multiple
+    question: ¿Quién participa en la decisión de compra de material médico quirúrgico en su institución?
+    body_text: Puede seleccionar varias opciones.
+    img_url: null
+    max_options: 1
+    options:
+      - text_value: Departamento de Compras
+      - text_value: Administración
+      - text_value: Dirección Médica
+      - text_value: Jefatura de Enfermería
+      - text_value: Comité de Compras
+      - text_value: Otro
+        is_alternative: true
+
+  - type: text
+    question: Si pudiera mejorar un solo aspecto de sus proveedores actuales, ¿cuál sería?
+    body_text: null
+    img_url: null
+
+  - type: multiple
+    question: ¿Estaría dispuesto(a) a participar en una breve entrevista de seguimiento para ampliar algunos aspectos de esta encuesta?
+    body_text: null
+    img_url: null
+    max_options: 1
+    options:
+      - text_value: "Sí (opcional: indique su nombre, cargo y número de contacto)"
+        is_alternative: 
+      - text_value: No
