@@ -1,17 +1,17 @@
-import { dirname, fromFileUrl } from "@std/path";
+import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import solid from "vite-plugin-solid";
 import { cloudflare } from "@cloudflare/vite-plugin";
 
-const pathAlias = (path: string) => fromFileUrl(dirname(import.meta.url) + "/" + path);
+const alias = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
   plugins: [solid(), cloudflare()],
   resolve: {
     alias: {
-      "@": pathAlias("./src"),
-      "@frontend": pathAlias("./src/survey"),
-      "@worker": pathAlias("./src/worker"),
+      "@": alias("./src"),
+      "@frontend": alias("./src/survey"),
+      "@worker": alias("./src/worker"),
     },
   },
   server: { port: 3000 },

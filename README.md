@@ -53,7 +53,7 @@ Start the development server with:
 npm run dev
 ```
 
-Your application will be available at [http://localhost:5173](http://localhost:5173).
+Your application will be available at [http://localhost:3000](http://localhost:3000).
 
 ## Production
 
@@ -69,10 +69,13 @@ Preview your build locally:
 npm run preview
 ```
 
+> [!NOTE]: To manage the database
+> go to [http://localhost:3000/cdn-cgi/explorer](http://localhost:3000/cdn-cgi/explorer)
+
 Deploy your project to Cloudflare Workers:
 
 ```bash
-npm run build && npm run deploy
+npm run deploy
 ```
 
 Monitor your workers:

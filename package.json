@@ -12,5 +12,34 @@
     "preview_icon_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/532a5378-9717-4964-385b-5fafd2160200/public",
     "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/ec7f4be5-d1d6-4e94-0851-126341745400/preview",
     "publish": true
+  },
+  "dependencies": {
+    "solid-js": "1.9.14",
+    "@solidjs/router": "^1.0.0",
+    "hono": "4.12.29",
+    "@hono/standard-validator": "^0.3.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.45.0",
+    "globals": "^17.0.0",
+    "vite": "^6.0.0",
+    "vite-plugin-solid": "2.11.12",
+    "wrangler": "4.111.0",
+    "rimraf": "6.1.3"
+  },
+  "scripts": {
+    "build": "vite build",
+    "preview": "npm run build && vite preview",
+    "dev": "vite dev",
+
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types",
+    "migrations": "wrangler d1 migrations apply MAIN_DB",
+    "seed": "wrangler d1 execute MAIN_DB --file=survey_seed.sql",
+
+    "lint": "deno lint",
+    "fmt": "deno fmt",
+    "clean": "rimraf ./dist ./.wrangler"
   }
 }

@@ -1,7 +1,5 @@
 // TODO: Missing features
-// - [ ] Success page
-// - [ ] Monitoring page
-// - [ ] etc
+// - [ ] Results page
 
 //# Imports
 
@@ -12,7 +10,7 @@ import "./main.css";
 
 //# Routes
 
-const AppRoutes = () => {
+const App = () => {
   return (
     <Router>
       <Route path="/" component={lazy(() => import("./pages/Home.tsx"))} />
@@ -36,11 +34,11 @@ const GotoMain = () => {
   return null;
 };
 
-const InProgress = (name: string) => (() => <h1>{name} page in progress....</h1>);
+const InProgress = (name: string) => (() => <h1>{name} page in progress...</h1>);
 
 //# Render
 
 const root_element = document.getElementById("root");
 if (!root_element) throw new Error("Cannot find root element");
 
-render(() => <AppRoutes />, document.getElementById("root")!);
+render(() => <App />, root_element);

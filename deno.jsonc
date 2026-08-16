@@ -1,34 +1,4 @@
 {
-  "tasks": {
-    "build": {
-      "command": "deno -REWS --allow-run --allow-ffi npm:vite build",
-      "files": ["src/**/*.ts", "src/**/*.tsx", "deno.jsonc"],
-      "output": ["dist/"]
-    },
-
-    "preview": {
-      "command": "deno -REWSN --allow-run --allow-ffi npm:vite preview",
-      "dependencies": ["build"]
-    },
-
-    // NOTE: go to http://localhost:3000/cdn-cgi/explorer
-    "dev": "deno -REWSN --allow-run --allow-ffi npm:vite dev",
-
-    // Backend mantainance tasks
-    "deploy": {
-      "command": "deno --allow-env --allow-run npm:wrangler deploy",
-      "dependencies": ["build"]
-    },
-    "cf-typegen": "deno -E --allow-run npm:wrangler types",
-    "migrations": "deno -E --allow-run npm:wrangler d1 migrations apply MAIN_DB",
-    "seed": "deno -E --allow-run npm:wrangler d1 execute MAIN_DB --file=survey_seed.sql",
-
-    // Codebase mantainance tasks
-    "lint": "deno lint",
-    "fmt": "deno fmt",
-    "clean": "rm -rf ./dist ./.wrangler"
-  },
-
   "imports": {
     // Mappings
     // NOTE: Synchronize with vite.config.ts
@@ -36,21 +6,8 @@
     "@frontend/": "./src/survey/",
     "@worker/": "./src/worker/",
 
-    // Dependencies
-    "solid-js": "npm:solid-js@1.9.14",
-    "@solidjs/router": "npm:@solidjs/router@^1.0.0",
-    "hono": "npm:hono@4.12.29",
-    "@hono/standard-validator": "npm:@hono/standard-validator@^0.3.0",
-    "zod": "npm:zod@^4.4.3",
-
-    // Development dependencies
-    "@cloudflare/vite-plugin": "npm:@cloudflare/vite-plugin@1.45.0",
-    "@std/path": "jsr:@std/path@^1.1.1",
+    "@std/path": "jsr:@std/path@^1.1.1", // replace with node:path
     "std/yaml": "https://deno.land/std@0.208.0/yaml/mod.ts",
-    "globals": "npm:globals@^17.0.0",
-    "vite": "npm:vite@^6.0.0",
-    "vite-plugin-solid": "npm:vite-plugin-solid@2.11.12",
-    "wrangler": "npm:wrangler@4.111.0"
   },
   "minimumDependencyAge": {
     "age": "P7D"
