@@ -1,6 +1,6 @@
 {
 	"$schema": "https://www.unpkg.com/wrangler/config-schema.json",
-	"name": "quiz-worker",
+	"name": "survey",
 	"main": "./src/worker/index.ts",
 	"compatibility_date": "2025-10-08",
 	"compatibility_flags": [
@@ -12,7 +12,7 @@
 	"d1_databases": [
 		{
 			"binding": "MAIN_DB",
-			"database_name": "quiz-db",
+			"database_name": "survey-db",
 			"migrations_dir": "./migrations",
 			"database_id": "41f0bcf3-d1b3-4060-af77-0fd7e2ef7369"
 		}

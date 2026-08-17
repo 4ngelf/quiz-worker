@@ -3,7 +3,7 @@
 //! Example: deno -A scripts/load_survey.ts actual_surveys/1.yaml 1 1 1
 
 import { parse as parseYaml } from "std/yaml";
-import * as schema from "../src/worker/schema.ts";
+import * as schema from "@worker/schema.ts";
 
 // Type interfaces for the YAML survey structure
 interface SurveyOption {
@@ -33,12 +33,12 @@ interface IDConfig {
   option_id: number;
 }
 
-
-
 // Parse command-line arguments for IDs
 const getIDConfig = (args: string[]): IDConfig => {
   if (args.length < 3) {
-    console.error("Usage: deno -A scripts/load_survey.ts <path_to_survey.yaml> <survey_id> <question_id> <option_id>");
+    console.error(
+      "Usage: deno -A scripts/load_survey.ts <path_to_survey.yaml> <survey_id> <question_id> <option_id>",
+    );
     console.error("Example: deno -A scripts/load_survey.ts actual_surveys/1.yaml 1 1 1");
     Deno.exit(1);
   }
@@ -52,7 +52,7 @@ const getIDConfig = (args: string[]): IDConfig => {
   }
 
   console.log(`Using IDs: survey=${survey_id}, question=${question_id}, option=${option_id}\n`);
-  
+
   return { survey_id, question_id, option_id };
 };
 
@@ -78,7 +78,9 @@ const mapQuestionType = (type: string): number => {
 
 const main = async () => {
   if (Deno.args.length < 4) {
-    console.error("Usage: deno -A scripts/load_survey.ts <path_to_survey.yaml> <survey_id> <question_id> <option_id>");
+    console.error(
+      "Usage: deno -A scripts/load_survey.ts <path_to_survey.yaml> <survey_id> <question_id> <option_id>",
+    );
     console.error("Example: deno -A scripts/load_survey.ts actual_surveys/1.yaml 1 1 1");
     Deno.exit(1);
   }
@@ -107,7 +109,9 @@ const main = async () => {
     const sqlStatements: string[] = [];
 
     // 1. Insert survey
-    const insertSurvey = `INSERT INTO surveys (id, name, description) VALUES (${currentSurveyId}, ${escapeSqlString(surveyData.name)}, ${escapeSqlString(surveyData.description)});`;
+    const insertSurvey = `INSERT INTO surveys (id, name, description) VALUES (${currentSurveyId}, ${
+      escapeSqlString(surveyData.name)
+    }, ${escapeSqlString(surveyData.description)});`;
     sqlStatements.push(insertSurvey);
 
     // 2. Insert questions and options
@@ -119,7 +123,8 @@ const main = async () => {
       const imgUrl = escapeSqlString(question.img_url ?? null);
       const maxOptions = question.max_options ?? 1;
 
-      const insertQuestion = `INSERT INTO questions (id, survey_id, type, question, body_text, img_url, max_options) VALUES (${currentQuestionId}, ${currentSurveyId}, ${questionType}, ${questionText}, ${bodyText}, ${imgUrl}, ${maxOptions});`;
+      const insertQuestion =
+        `INSERT INTO questions (id, survey_id, type, question, body_text, img_url, max_options) VALUES (${currentQuestionId}, ${currentSurveyId}, ${questionType}, ${questionText}, ${bodyText}, ${imgUrl}, ${maxOptions});`;
       sqlStatements.push(insertQuestion);
 
       // Insert question options if they exist
@@ -129,7 +134,10 @@ const main = async () => {
           const optionNumber = optionIdx + 1;
           const isAlternative = boolToSqlInt(option.is_alternative);
 
-          const insertOption = `INSERT INTO questions_options (id, question_id, number, text_value, img_url, is_alternative) VALUES (${currentOptionId}, ${currentQuestionId}, ${optionNumber}, ${escapeSqlString(option.text_value)}, ${escapeSqlString(option.img_url ?? null)}, ${isAlternative});`;
+          const insertOption =
+            `INSERT INTO questions_options (id, question_id, number, text_value, img_url, is_alternative) VALUES (${currentOptionId}, ${currentQuestionId}, ${optionNumber}, ${
+              escapeSqlString(option.text_value)
+            }, ${escapeSqlString(option.img_url ?? null)}, ${isAlternative});`;
           sqlStatements.push(insertOption);
           currentOptionId++;
         }
@@ -158,7 +166,10 @@ const main = async () => {
     console.log(`-- Questions: ${currentQuestionId - ids.question_id}`);
     console.log(`-- Options: ${currentOptionId - ids.option_id}`);
   } catch (error) {
-    console.error("Error processing survey file:", error instanceof Error ? error.message : String(error));
+    console.error(
+      "Error processing survey file:",
+      error instanceof Error ? error.message : String(error),
+    );
     Deno.exit(1);
   }
 };

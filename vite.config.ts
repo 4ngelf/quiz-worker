@@ -1,9 +1,9 @@
-import { fileURLToPath, URL } from "node:url";
+import { dirname, fromFileUrl } from "@std/path";
 import { defineConfig } from "vite";
 import solid from "vite-plugin-solid";
 import { cloudflare } from "@cloudflare/vite-plugin";
 
-const alias = (path: string) => fileURLToPath(new URL(path, import.meta.url));
+const alias = (path: string) => fromFileUrl(dirname(import.meta.url) + "/" + path);
 
 export default defineConfig({
   plugins: [solid(), cloudflare()],
