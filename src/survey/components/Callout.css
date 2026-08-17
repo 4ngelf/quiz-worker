@@ -1,0 +1,30 @@
+.callout {
+  background-color: var(--container-bg-color);
+  border-radius: 8px;
+  margin: 5px 0;
+  padding: 10px 20px;
+}
+
+.callout-title {
+  color: var(--heading-color);
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.callout p {
+  color: var(--subtitle-color);
+  margin: 0;
+}
+
+.callout-info,
+.callout-warning {
+  font-size: 1.15rem;
+}
+
+.callout-info::before {
+  content: "ℹ️ ";
+}
+
+.callout-warning::before {
+  content: "⚠️ ";
+}

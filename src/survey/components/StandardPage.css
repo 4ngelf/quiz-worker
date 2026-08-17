@@ -1,0 +1,13 @@
+main {
+  flex: 1;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.standard-page-layout {
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 320px;
+}

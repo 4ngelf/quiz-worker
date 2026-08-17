@@ -1,47 +1,101 @@
+/* # defaults */
+
+/* Reset attributes with effect on layout */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 :root {
+  /* Font defaults */
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.95);
-  background: linear-gradient(135deg, #020617, #111827 60%, #1d4ed8);
   font-synthesis: none;
+  line-height: 1.5;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Variables */
+  --heading-color: rgba(255, 255, 255, 0.95);
+  --subtitle-color: rgba(205, 210, 231, 1);
+  --highlight-color: rgba(139, 211, 255);
+  --primary-color: linear-gradient(135deg, #4f46e5, #2563eb);
+  --container-bg-color: rgba(255, 255, 255, 0.08);
+  --container-border-color: rgba(255, 255, 255, 0.12);
+  --option-color: rgba(220, 220, 250, 1);
+  --option-bg-color: rgba(17, 24, 39, 0.7);
 }
+
+/* # Tag style overrides */
+
+/* ## Container elements */
 
 * {
   box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  background: linear-gradient(135deg, #020617, #111827 60%, #1d4ed8);
 }
 
-#root {
-  min-height: 100vh;
+/* ## Unit elements */
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading-color);
 }
 
 button {
+  background: var(--primary-color);
   border-radius: 12px;
-  border: 1px solid transparent;
-  padding: 0.7em 1em;
+  border-width: 0px;
+  color: white;
+  cursor: pointer;
   font-size: 1rem;
   font-weight: 500;
-  font-family: inherit;
-  background-color: #111827;
-  cursor: pointer;
+  padding: 0.7em 1em;
   transition: border-color 0.4s ease, outline-offset 0.3s ease-out;
 }
 
-/* button:hover { */
-/*   border-color: #8bd3ff; */
-/*   transform: translateY(-1px); */
-/* } */
-/* button:focus, */
-/* button:focus-visible { */
-/*   outline: 2px solid #8bd3ff; */
-/*   outline-offset: 2px; */
-/* } */
+button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* # Modifiers */
+
+.container {
+  background: var(--container-bg-color);
+  border-radius: 4px;
+  border: 1px solid var(--container-border-color);
+  margin: 1rem 0px;
+  padding: 1.25rem;
+}
+
+.subtitle {
+  color: var(--subtitle-color);
+}
+
+/* TODO: move to StatusContext */
+
+.status {
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  padding: 0.8rem 1rem;
+}
+
+.status-success {
+  background: rgba(51, 204, 125, 0.2);
+  color: #c9ffd5;
+}
+
+.status-warning {
+  background: rgba(255, 184, 77, 0.2);
+  color: #ffe7bc;
+}
+
+.status-error {
+  background: rgba(255, 77, 77, 0.2);
+  color: #ffa7bc;
+}

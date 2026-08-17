@@ -5,7 +5,7 @@ INSERT INTO surveys (id, name, description) VALUES
 
 -- Seed data for questions
 INSERT INTO questions (id, survey_id, type, question, body_text, img_url, max_options) VALUES 
-(1, 1, 1, 'How satisfied are you with our product?', 'Please rate your overall satisfaction level.', 'https://example.com/images/q1.png', 1),
+(1, 1, 1, 'How satisfied are you with our product?', 'Please rate your overall satisfaction level.', 'https://static.vecteezy.com/system/resources/previews/003/570/922/original/customer-satisfaction-meter-with-different-emotions-emotions-scale-background-vector.jpg', 1),
 (2, 1, 1, 'Would you recommend us to a friend?', 'Select yes or no.', NULL, 1),
 (5, 1, 0, 'Explain things here', 'text time', NULL, 1),
 (3, 2, 1, 'How satisfied are you with your remote work tools?', NULL, NULL, 2),

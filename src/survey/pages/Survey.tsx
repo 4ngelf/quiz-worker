@@ -1,26 +1,25 @@
-//# Imports
+//# Import modules
 
-import {
-  createEffect,
-  createResource,
-  createSignal,
-  For,
-  Match,
-  Show,
-  splitProps,
-  Suspense,
-  Switch,
-} from "solid-js";
-import type { Setter } from "solid-js";
+import { createEffect, createResource, createSignal, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useNavigate, useParams } from "@solidjs/router";
 import { hc } from "hono/client";
-import type { infer as z_infer } from "zod/mini";
-
-import type { API } from "@worker/index.ts";
 import * as schema from "@worker/schema.ts";
 
-//# Assets
+//# Import types
+
+import type { Setter } from "solid-js";
+import type { infer as z_infer } from "zod/mini";
+import type { API } from "@worker/index.ts";
+
+//# Import components
+
+import { For, Match, Show, Suspense, Switch } from "solid-js";
+
+import StandardPage from "@frontend/components/StandardPage.tsx";
+import Callout from "@frontend/components/Callout.tsx";
+
+//# Import Assets
 
 import "./Survey.css";
 
@@ -28,7 +27,7 @@ import "./Survey.css";
 
 const api_client = hc<API>("/");
 
-//## Types
+//- API Layer Types
 
 // Types extracted from schema and api
 // deno-lint-ignore no-namespace
@@ -43,8 +42,6 @@ namespace schema_type {
 }
 
 //# Frontend Components
-
-//## State manipulation
 
 // Internal representation for responseQuestions
 // deno-lint-ignore no-namespace
@@ -106,7 +103,7 @@ const processAnswersData = (ad: AnswersData): schema_type.SubmitRequest => {
   return { date: date, answers: answers };
 };
 
-//## Main Component
+//# Main Component
 
 type Status =
   | { status: "fatal"; message: string }
@@ -114,8 +111,8 @@ type Status =
   | { status: "submitting" }
   | { status: "submitted" };
 
-const App = () => {
-  //### Constants
+const Survey = () => {
+  //- Constants
 
   const navigate = useNavigate();
 
@@ -124,13 +121,13 @@ const App = () => {
 
   console.log(`survey loaded: ${survey_id}`);
 
-  //### Signals
+  //- Signals
 
   const [getStatus, setStatus] = createSignal<Status | null>(null);
   const [answers_data, setAnswersData] = createStore<AnswersData>({});
   const [getSubmitPayload, setSubmitPayload] = createSignal<schema_type.SubmitRequest | null>(null);
 
-  //### API resources
+  //- API resources
 
   const fetchQuestions = async (survey_id: string) => {
     console.log(`Fetching questions for survey: ${survey_id}`);
@@ -186,7 +183,7 @@ const App = () => {
   const [getQuestionsData] = createResource(() => survey_id, fetchQuestions);
   const [_, _submitDataMethods] = createResource(getSubmitPayload, fetchSubmit);
 
-  //### Helper functions
+  //- Helper functions
 
   const isSubmitting = () => {
     const status = getStatus();
@@ -213,7 +210,7 @@ const App = () => {
     return true;
   };
 
-  //### Events
+  //- Events
 
   const onAnswerSetAnswersData = (
     question_id: number,
@@ -243,25 +240,34 @@ const App = () => {
     setSubmitPayload(submit_request);
   };
 
-  //### Render
+  //- Render
 
   return (
-    <main class="app-shell">
+    <StandardPage>
       <DisplayStatusBlock status={getStatus()} />
       <Suspense fallback={<LoadingQuestionsBlock />}>
         <Show when={getQuestionsData.state === "ready"}>
-          <section class="hero-card">
+          {/* TODO: Maybe this should be layout diferently to the questions? */}
+          <section class="container">
             <h1>{getQuestionsData()!.name}</h1>
             <Show when={getQuestionsData()!.description}>
-              <p class="eyebrow">{getQuestionsData()!.description}</p>
+              <Callout>
+                <p>{getQuestionsData()!.description}</p>
+              </Callout>
             </Show>
           </section>
 
-          <QuestionsBodyBlock
-            questions={getQuestionsData()!.questions}
-            setStatus={setStatus}
-            onAnswer={onAnswerSetAnswersData}
-          />
+          <section>
+            <For each={Object.values(getQuestionsData()!.questions)}>
+              {(question) => (
+                <QuestionCardBlock
+                  question={question}
+                  setStatus={setStatus}
+                  onAnswer={onAnswerSetAnswersData}
+                />
+              )}
+            </For>
+          </section>
 
           <SubmitButtonBlock onClick={onSubmitSendAnswers} disabled={isSubmitting()} />
         </Show>
@@ -271,160 +277,114 @@ const App = () => {
           </div>
         </Show>
       </Suspense>
-    </main>
+    </StandardPage>
   );
 };
 
-const QuestionsBodyBlock = (props: {
-  questions: processed.Questions;
+const QuestionCardBlock = (props: {
+  question: processed.Question;
   setStatus: Setter<Status | null>;
   onAnswer: (question_id: number, answer_value: schema_type.JsonAnswerValue) => void;
-}) => (
-  <div>
-    <For each={Object.values(props.questions)}>
-      {(question) => {
-        //### Helpers
+}) => {
+  //- Helpers
 
-        const questionTypeText = () => {
-          switch (question.type) {
-            case schema.AnswerType.Multiple:
-              return (question.max_options ?? 1) > 1 ? "Selección múltiple " : "Opcion";
-            case schema.AnswerType.Text:
-              return "Texto libre";
-            default:
-              throw new Error("Programming error: question type not handled");
-          }
-        };
+  const questionTypeText = () => {
+    switch (props.question.type) {
+      case schema.AnswerType.Multiple:
+        return (props.question.max_options ?? 1) > 1 ? "Selección múltiple " : "Opcion";
+      case schema.AnswerType.Text:
+        return "Texto libre";
+      default:
+        throw new Error("Programming error: question type not handled");
+    }
+  };
 
-        //### Events
+  //- Events
 
-        const onSelectChoice = (
-          option_id: number,
-          alternative_text?: string,
-        ) => {
-          const answer: schema_type.JsonAnswerValue = {
-            type: schema.AnswerType.Multiple,
-            question_option_id: option_id,
-            optional_alternative_text: alternative_text,
-          };
-          props.onAnswer(question.id, answer);
-        };
+  const onSelectChoice = (
+    option_id: number,
+    alternative_text?: string,
+  ) => {
+    props.onAnswer(props.question.id, {
+      type: schema.AnswerType.Multiple,
+      question_option_id: option_id,
+      optional_alternative_text: alternative_text,
+    });
+  };
 
-        const onMultiSelectChoice = (option_ids: number[]) => {
-          const answer: schema_type.JsonAnswerValue = {
-            type: schema.AnswerType.Multiple,
-            question_option_ids: option_ids,
-          };
-          props.onAnswer(question.id, answer);
-        };
+  const onMultiSelectChoice = (option_ids: number[]) => {
+    props.onAnswer(props.question.id, {
+      type: schema.AnswerType.Multiple,
+      question_option_ids: option_ids,
+    });
+  };
 
-        const onInputTextType = (inserted_text: string) => {
-          const answer: schema_type.JsonAnswerValue = {
-            type: schema.AnswerType.Text,
-            text: inserted_text,
-            large: false,
-          };
-          props.onAnswer(question.id, answer);
-        };
+  const onInputTextType = (inserted_text: string) => {
+    props.onAnswer(props.question.id, {
+      type: schema.AnswerType.Text,
+      text: inserted_text,
+      large: false,
+    });
+  };
 
-        //### Render
-
-        return (
-          <article class="question-card">
-            <div class="question-header">
-              <h2>{question.question}</h2>
-              <span class="question-type">{questionTypeText()}</span>
-            </div>
-            <Show when={question.img_url}>
-              <img class="question-image" src={question.img_url!} />
-            </Show>
-            <Show when={question.body_text}>
-              <p class="question-body">{question.body_text}</p>
-            </Show>
-            <Switch>
-              <Match
-                when={question.type === schema.AnswerType.Multiple &&
-                  (question.max_options ?? 1) === 1}
-              >
-                <MultipleChoiceBlock
-                  choices={(question as processed.QuestionWithOptions).options}
-                  onSelectChoice={onSelectChoice}
-                />
-              </Match>
-              <Match
-                when={question.type === schema.AnswerType.Multiple &&
-                  (question.max_options ?? 1) > 1}
-              >
-                <MultiSelectBlock
-                  choices={(question as processed.QuestionWithOptions).options}
-                  max_options={question.max_options ?? 2}
-                  onMultiSelectChoice={onMultiSelectChoice}
-                />
-              </Match>
-              <Match when={question.type === schema.AnswerType.Text}>
-                <TextAreaBlock onInput={onInputTextType} />
-              </Match>
-            </Switch>
-          </article>
-        );
-      }}
-    </For>
-  </div>
-);
-
-//## Subcomponents
-
-const LoadingQuestionsBlock = () => {
-  // TODO: Loading animation
-  return <span>Cargando preguntas...</span>;
-};
-
-const DisplayStatusBlock = (props: { status: Status | null }) => {
-  ///### Constants
-
-  const [{ status }] = splitProps(props, ["status"]);
-  if (!status) return;
-
-  let message = null;
-  let style = null;
-  switch (status.status) {
-    case "error":
-    case "fatal":
-      message = status.message;
-      style = "status error";
-      break;
-    case "submitted":
-      message = "Gracias! Respuestas enviadas!";
-      style = "status success";
-      break;
-  }
-  if (!message) return;
-
-  ///### Render
+  //- Render
 
   return (
-    <p class={style ?? "status warning"}>
-      {message}
-    </p>
+    <article class="question container">
+      <p class="question-type">{questionTypeText()}</p>
+      <h2 class="question-header">{props.question.question}</h2>
+      <Show when={props.question.img_url}>
+        <img class="question-image" src={props.question.img_url!} />
+      </Show>
+      <Show when={props.question.body_text}>
+        <p class="question-body-text">{props.question.body_text}</p>
+      </Show>
+      <Switch>
+        <Match
+          when={props.question.type === schema.AnswerType.Multiple &&
+            (props.question.max_options ?? 1) === 1}
+        >
+          <MultipleChoiceBlock
+            choices={(props.question as processed.QuestionWithOptions).options}
+            onSelectChoice={onSelectChoice}
+          />
+        </Match>
+        <Match
+          when={props.question.type === schema.AnswerType.Multiple &&
+            (props.question.max_options ?? 1) > 1}
+        >
+          <MultiSelectBlock
+            choices={(props.question as processed.QuestionWithOptions).options}
+            max_options={props.question.max_options ?? 2}
+            onMultiSelectChoice={onMultiSelectChoice}
+          />
+        </Match>
+        <Match when={props.question.type === schema.AnswerType.Text}>
+          <TextAreaBlock onInput={onInputTextType} />
+        </Match>
+      </Switch>
+    </article>
   );
 };
 
 const TextAreaBlock = (props: {
   onInput: (inserted_text: string) => void;
-}) => (
-  <textarea
-    class="text-input"
-    placeholder="Type your answer here"
-    onInput={(e) => props.onInput(e.currentTarget.value)}
-  >
-  </textarea>
-);
+}) => {
+  return (
+    <textarea
+      class="answer answer-text"
+      placeholder="Escribe tu respuesta aqui..."
+      onInput={(e) => props.onInput(e.currentTarget.value)}
+    >
+    </textarea>
+  );
+};
 
 const MultipleChoiceBlock = (props: {
   choices: schema_type.Option[];
   onSelectChoice: (option_id: number, alternative_text?: string) => void;
 }) => {
-  //### Signals
+  //- Signals
 
   const [getSelectedId, setSelectedId] = createSignal<number>(-1);
   const [getAlternativeText, setAlternativeText] = createSignal<string>("");
@@ -447,14 +407,14 @@ const MultipleChoiceBlock = (props: {
     }
   });
 
-  //### Helpers
+  //- Helpers
 
   const buttonStyle = (option_id: number) => {
     if (getSelectedId() === option_id) return "option-button selected";
     else return "option-button";
   };
 
-  //### Render
+  //- Render
 
   return (
     <div class="options-grid">
@@ -489,7 +449,7 @@ const MultiSelectBlock = (props: {
   max_options: number;
   onMultiSelectChoice: (option_ids: number[]) => void;
 }) => {
-  //### Signals
+  //- Signals
 
   const [getSelectedIds, setSelectedIds] = createSignal<number[]>([]);
 
@@ -498,7 +458,7 @@ const MultiSelectBlock = (props: {
     props.onMultiSelectChoice(ids);
   });
 
-  //### Helpers
+  //- Helpers
 
   const toggleOption = (option_id: number) => {
     const current = getSelectedIds();
@@ -525,7 +485,7 @@ const MultiSelectBlock = (props: {
     return "checkbox-button";
   };
 
-  //### Render
+  //- Render
 
   return (
     <div class="options-grid">
@@ -550,6 +510,43 @@ const MultiSelectBlock = (props: {
   );
 };
 
+//# Subcomponents
+
+const LoadingQuestionsBlock = () => {
+  // TODO: Loading animation
+  return (
+    <div class="container">
+      <p>Cargando preguntas...</p>
+    </div>
+  );
+};
+
+const DisplayStatusBlock = (props: { status: Status | null }) => {
+  const [{ status }] = splitProps(props, ["status"]);
+  if (!status) return;
+
+  let message = null;
+  let style = null;
+  switch (status.status) {
+    case "error":
+    case "fatal":
+      message = status.message;
+      style = "status error";
+      break;
+    case "submitted":
+      message = "Gracias! Respuestas enviadas!";
+      style = "status success";
+      break;
+  }
+  if (!message) return;
+
+  return (
+    <p class={style ?? "status warning"}>
+      {message}
+    </p>
+  );
+};
+
 const SubmitButtonBlock = (props: {
   onClick: (e: Event) => void;
   disabled: boolean;
@@ -561,4 +558,4 @@ const SubmitButtonBlock = (props: {
 
 //# Export application
 
-export default App;
+export default Survey;

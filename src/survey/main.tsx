@@ -1,11 +1,11 @@
-// TODO: Missing features
-// - [ ] Results page
-
 //# Imports
 
 import { lazy, onMount } from "solid-js";
 import { render } from "solid-js/web";
 import { Route, Router, useNavigate } from "@solidjs/router";
+
+//# Assets
+
 import "./main.css";
 
 //# Routes
@@ -34,11 +34,12 @@ const GotoMain = () => {
   return null;
 };
 
-const InProgress = (name: string) => (() => <h1>{name} page in progress...</h1>);
+const InProgress = (name: string) => {
+  return (() => {
+    return <h1>{name} page in progress...</h1>;
+  });
+};
 
 //# Render
 
-const root_element = document.getElementById("root");
-if (!root_element) throw new Error("Cannot find root element");
-
-render(() => <App />, root_element);
+render(() => <App />, document.querySelector("body")!);
