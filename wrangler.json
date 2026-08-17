@@ -14,7 +14,7 @@
 			"binding": "MAIN_DB",
 			"database_name": "survey-db",
 			"migrations_dir": "./migrations",
-			"database_id": "41f0bcf3-d1b3-4060-af77-0fd7e2ef7369"
+			"database_id": "a663228e-e600-4524-b5ff-08ec0e462c13"
 		}
 	],
 	"upload_source_maps": true,
