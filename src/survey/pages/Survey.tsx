@@ -26,7 +26,12 @@ import "./Survey.css";
 
 //# API Layer
 
-const api_client = hc<API>("/");
+const sessionId = crypto.randomUUID();
+const api_client = hc<API>("/", {
+  headers: {
+    "X-Session": sessionId,
+  },
+});
 
 //## Types
 
