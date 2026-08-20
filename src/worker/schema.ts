@@ -20,7 +20,7 @@ import {
 
 // Common types
 
-export const Index = number().check(positive());
+export const Index = number(); // TODO: .check(positive());
 export const BooleanInt = number().check((ctx) => {
   if (ctx.value !== 0 && ctx.value !== 1) {
     ctx.issues.push({

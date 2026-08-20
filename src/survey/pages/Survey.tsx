@@ -177,6 +177,9 @@ const App = () => {
       }
     } else {
       failed = true;
+      const error_json = await r.json();
+      const error_payload = JSON.parse(error_json.payload.message);
+      console.error("Falla al subir tus respuestas.", error_payload);
     }
     if (failed) throw new Error("Falla al subir tus respuestas.");
 
@@ -234,11 +237,13 @@ const App = () => {
   };
 
   const onSubmitSendAnswers = (_: Event) => {
-    if (!checkedAllAnswers()) {
-      setStatus({ status: "error", message: "Todavia hay preguntas sin responder" });
-      return;
-    }
+    // TODO: Check better, for now just send incomplete answers
+    // if (!checkedAllAnswers()) {
+    //   setStatus({ status: "error", message: "Todavia hay preguntas sin responder" });
+    //   return;
+    // }
     setStatus({ status: "submitting" });
+    console.debug(`submitting ${JSON.stringify(answers_data)}`);
     const submit_request = processAnswersData(answers_data);
     setSubmitPayload(submit_request);
   };
